@@ -1,0 +1,2219 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" class="dark" data-font-theme="serif">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Post Chorus 活動音樂播放及歌詞控制台</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Plus Jakarta Sans, Noto Serif TC, LXGW WenKai TC, Zen Maru Gothic & Space Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&family=Noto+Serif+TC:wght@500;700;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['var(--app-font-sans)', '"Plus Jakarta Sans"', '"Noto Serif TC"', 'system-ui', 'sans-serif'],
+            mono: ['"Space Mono"', 'monospace'],
+          },
+          colors: {
+            obsidian: {
+              950: '#06080d',
+              900: '#0b0f19',
+              850: '#101624',
+              800: '#161f33',
+            },
+            champagne: {
+              300: '#f5deb3',
+              400: '#eab676',
+              500: '#d49a4a',
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    /* Curated Typography Themes */
+    :root,
+    [data-font-theme="serif"] {
+      --app-font-sans: "Plus Jakarta Sans", "Noto Serif TC", Georgia, serif;
+    }
+    [data-font-theme="wenkai"] {
+      --app-font-sans: "Plus Jakarta Sans", "LXGW WenKai TC", cursive, sans-serif;
+    }
+    [data-font-theme="maru"] {
+      --app-font-sans: "Plus Jakarta Sans", "Zen Maru Gothic", sans-serif;
+    }
+
+    body {
+      font-family: var(--app-font-sans);
+      background-color: #06080d;
+      background-image:
+        radial-gradient(circle at 12% 0%, rgba(212, 154, 74, 0.12), transparent 38%),
+        radial-gradient(circle at 88% 8%, rgba(56, 189, 248, 0.10), transparent 40%),
+        linear-gradient(180deg, #06080d 0%, #090d16 100%);
+      color: #f1f5f9;
+      min-height: 100vh;
+    }
+
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Frosted Obsidian Studio Panel */
+    .studio-panel {
+      background: linear-gradient(180deg, rgba(20, 27, 45, 0.86) 0%, rgba(12, 17, 29, 0.94) 100%);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      box-shadow:
+        0 20px 45px -15px rgba(0, 0, 0, 0.65),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+    }
+
+    /* Recessed Hardware Display Well */
+    .studio-recessed {
+      background: rgba(6, 9, 16, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.65);
+    }
+
+    /* Tactile Console Buttons */
+    .console-btn {
+      transition: transform 0.12s ease, box-shadow 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 4px 12px rgba(0, 0, 0, 0.35);
+    }
+    .console-btn:hover {
+      transform: translateY(-1px);
+    }
+    .console-btn:active {
+      transform: translateY(1px) scale(0.985);
+    }
+
+    /* Custom Range Slider */
+    input[type="range"].studio-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      background: rgba(30, 41, 59, 0.9);
+      height: 8px;
+      border-radius: 999px;
+      outline: none;
+    }
+    input[type="range"].studio-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #f5deb3 0%, #d49a4a 100%);
+      border: 2px solid #0b0f19;
+      box-shadow: 0 0 12px rgba(234, 182, 118, 0.65);
+      cursor: pointer;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.4);
+      border-radius: 999px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.25);
+      border-radius: 999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(234, 182, 118, 0.45);
+    }
+
+    /* Teleprompter Stage Spotlight */
+    .stage-spotlight {
+      background:
+        radial-gradient(ellipse at 50% 0%, rgba(234, 182, 118, 0.16) 0%, transparent 55%),
+        radial-gradient(ellipse at 50% 100%, rgba(56, 189, 248, 0.12) 0%, transparent 55%),
+        #05070c;
+    }
+  </style>
+</head>
+<body class="antialiased selection:bg-amber-400/30 selection:text-amber-200">
+
+  <!-- Hidden Audio Element -->
+  <audio id="mainAudioPlayer" preload="auto" crossorigin="anonymous"></audio>
+
+  <!-- Hidden Local File Input for Loading MP3 Files Directly -->
+  <input id="localMp3Input" type="file" accept="audio/mp3,audio/mpeg,audio/*" multiple class="hidden" />
+
+  <!-- Hidden File Input for Importing Lyrics (.txt / .json) -->
+  <input id="lyricsFileInput" type="file" accept=".txt,.json,text/plain,application/json" class="hidden" />
+
+  <!-- Top Broadcast Navigation & Real-Time Clock Bar -->
+  <header class="sticky top-0 z-30 border-b border-white/10 bg-[#070a12]/90 backdrop-blur-xl">
+    <div class="max-w-[1480px] mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
+      <!-- Brand Identity -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-300 via-amber-500 to-amber-700 p-[1px] shadow-lg shadow-amber-500/20">
+          <div class="w-full h-full rounded-[11px] bg-[#0b0f19] flex items-center justify-center">
+            <svg class="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+            </svg>
+          </div>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base sm:text-lg font-extrabold tracking-wide text-white">POST CHORUS</h1>
+            <span class="px-2 py-0.5 text-[10px] font-mono uppercase tracking-widest rounded-full bg-amber-400/15 text-amber-300 border border-amber-400/30">STAGE AUDIO &amp; LYRICS</span>
+          </div>
+          <p class="text-xs text-slate-400">成音播放控制 · 流程時間軸 · Extended Mode 歌詞提詞系統</p>
+        </div>
+      </div>
+
+      <!-- Right Controls: Font Switcher + Live Rundown Phase + Master Wall Clock -->
+      <div class="flex items-center gap-2.5 sm:gap-3.5 ml-auto flex-wrap justify-end">
+        <!-- Curated Font Theme Switcher -->
+        <div class="studio-recessed rounded-xl p-1 flex items-center gap-1" title="切換控制台及提詞投影字體">
+          <span class="text-[10px] font-mono text-slate-400 px-1.5 hidden sm:inline">字體</span>
+          <button type="button" data-font-btn="serif" class="font-theme-btn px-2.5 py-1 rounded-lg text-xs font-bold transition bg-amber-400 text-slate-950">典雅宋體</button>
+          <button type="button" data-font-btn="wenkai" class="font-theme-btn px-2.5 py-1 rounded-lg text-xs font-semibold transition text-slate-300 hover:text-white">溫潤文楷</button>
+          <button type="button" data-font-btn="maru" class="font-theme-btn px-2.5 py-1 rounded-lg text-xs font-semibold transition text-slate-300 hover:text-white">現代圓體</button>
+        </div>
+
+        <!-- Live Rundown Status Pill -->
+        <div class="hidden md:flex flex-col items-end studio-recessed rounded-xl px-3.5 py-1.5">
+          <span class="text-[10px] font-mono uppercase tracking-wider text-slate-400">目前時段對應流程</span>
+          <span id="livePhaseText" class="text-xs font-bold text-amber-300 truncate max-w-[230px]">待機中（活動時間 15:35–17:10）</span>
+        </div>
+
+        <!-- Digital Master Wall Clock -->
+        <div class="studio-recessed rounded-xl px-3.5 py-1.5 flex items-center gap-2.5 border-amber-400/20">
+          <span class="relative flex h-2.5 w-2.5">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400"></span>
+          </span>
+          <div>
+            <div class="text-[9px] font-mono uppercase tracking-widest text-slate-400 leading-none mb-0.5">LIVE CLOCK</div>
+            <div id="masterWallClock" class="font-mono text-base sm:text-lg font-bold text-white tabular-nums leading-none">00:00:00</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Responsive Console Workspace -->
+  <main class="max-w-[1480px] mx-auto px-4 sm:px-6 py-5 grid grid-cols-1 xl:grid-cols-12 gap-5">
+
+    <!-- LEFT COLUMN (5 cols on xl): Dual-Track Audio Deck + Rundown Timeline -->
+    <div class="xl:col-span-5 flex flex-col gap-5">
+
+      <!-- 1. DUAL-TRACK AUDIO CONSOLE -->
+      <section class="studio-panel rounded-2xl p-5 flex flex-col gap-4">
+        <!-- Deck Header & Local MP3 Loader -->
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-5 rounded-full bg-gradient-to-b from-amber-300 to-amber-600"></span>
+            <h2 class="text-base font-bold text-white tracking-wide">雙曲成音播放器</h2>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="loadLocalFilesBtn" type="button" class="console-btn px-3 py-1.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-xs font-semibold text-amber-300 border border-amber-400/30 flex items-center gap-1.5" title="若瀏覽器無法自動讀取同資料夾 MP3，請點此選取本機檔案">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+              </svg>
+              <span>載入本機 MP3</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Two Song Selector Cards + Prominent Switch Button -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <!-- Track 0: 主你知道.mp3 -->
+          <button id="trackCard0" type="button" class="track-select-card text-left p-3 rounded-xl border transition-all bg-amber-400/15 border-amber-400/60 shadow-lg shadow-amber-500/10">
+            <div class="flex items-center justify-between gap-1 mb-1">
+              <span class="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-amber-400/20 text-amber-300 font-bold">TRACK 01</span>
+              <span id="trackStatus0" class="text-[10px] font-mono text-emerald-400">READY</span>
+            </div>
+            <div class="font-bold text-sm text-white truncate">主你知道.mp3</div>
+            <div class="text-[11px] text-slate-400 mt-0.5 truncate">15:40 頭40秒 · 15:50 0:30起</div>
+          </button>
+
+          <!-- Track 1: 來自天上的信.mp3 -->
+          <button id="trackCard1" type="button" class="track-select-card text-left p-3 rounded-xl border transition-all bg-slate-900/60 border-white/10 hover:border-white/25">
+            <div class="flex items-center justify-between gap-1 mb-1">
+              <span class="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-sky-400/20 text-sky-300 font-bold">TRACK 02</span>
+              <span id="trackStatus1" class="text-[10px] font-mono text-emerald-400">READY</span>
+            </div>
+            <div class="font-bold text-sm text-white truncate">來自天上的信.mp3</div>
+            <div class="text-[11px] text-slate-400 mt-0.5 truncate">17:10 延伸活動背景播放</div>
+          </button>
+        </div>
+
+        <!-- One-Click Switch Track Button -->
+        <button id="switchTrackBtn" type="button" class="console-btn w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-slate-800 via-slate-800/95 to-slate-800 hover:from-amber-500/20 hover:to-sky-500/20 border border-white/15 hover:border-amber-400/40 text-xs sm:text-sm font-bold text-amber-200 flex items-center justify-center gap-2">
+          <svg class="w-4 h-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+          </svg>
+          <span>⇄ 切換另一首歌曲（目前：<span id="currentTrackBadgeName" class="underline decoration-amber-400/70">主你知道.mp3</span>）</span>
+        </button>
+
+        <!-- OLED Telemetry Display & Real-Time Timecode -->
+        <div class="studio-recessed rounded-2xl p-4 flex flex-col gap-3">
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <div class="flex items-center gap-2">
+                <span id="playbackStatePill" class="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider bg-slate-800 text-slate-300">STOPPED</span>
+                <span id="autoFadeCountdownBadge" class="hidden px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-rose-500/20 text-rose-300 border border-rose-400/40 animate-pulse">
+                  距離自動淡出：40.0s
+                </span>
+              </div>
+              <div id="oledTrackTitle" class="text-lg sm:text-xl font-extrabold text-white truncate mt-1.5">主你知道.mp3</div>
+            </div>
+
+            <!-- Live Output Level Meter Bars -->
+            <div class="flex flex-col items-end shrink-0">
+              <span class="text-[10px] font-mono text-slate-400 mb-1">OUTPUT GAIN: <span id="gainPercentText" class="text-amber-300 font-bold">100%</span></span>
+              <div id="vuMeterBars" class="flex items-end gap-1 h-7 px-2 py-1 rounded-lg bg-black/50 border border-white/5">
+                <span class="vu-bar w-1.5 h-1.5 rounded-sm bg-emerald-400 transition-all duration-75"></span>
+                <span class="vu-bar w-1.5 h-2 rounded-sm bg-emerald-400 transition-all duration-75"></span>
+                <span class="vu-bar w-1.5 h-3 rounded-sm bg-emerald-400 transition-all duration-75"></span>
+                <span class="vu-bar w-1.5 h-4 rounded-sm bg-emerald-400 transition-all duration-75"></span>
+                <span class="vu-bar w-1.5 h-5 rounded-sm bg-amber-400 transition-all duration-75"></span>
+                <span class="vu-bar w-1.5 h-5 rounded-sm bg-amber-400 transition-all duration-75"></span>
+                <span class="vu-bar w-1.5 h-6 rounded-sm bg-rose-400 transition-all duration-75"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Real-Time Elapsed & Remaining Timecode -->
+          <div class="flex items-baseline justify-between gap-2 pt-1">
+            <div>
+              <span class="text-[10px] font-mono uppercase tracking-wider text-slate-500 block">ELAPSED (實時時間)</span>
+              <span id="elapsedTimeDisplay" class="font-mono text-2xl sm:text-3xl font-bold text-amber-300 tabular-nums tracking-tight">00:00.0</span>
+            </div>
+            <div class="text-right">
+              <span class="text-[10px] font-mono uppercase tracking-wider text-slate-500 block">REMAINING / TOTAL</span>
+              <span class="font-mono text-sm sm:text-base font-bold text-slate-300 tabular-nums">
+                -<span id="remainingTimeDisplay">00:00</span> <span class="text-slate-500">/</span> <span id="totalDurationDisplay">00:00</span>
+              </span>
+            </div>
+          </div>
+
+          <!-- Seekable Progress Bar with 0:30 & 0:40 Cue Markers -->
+          <div class="flex flex-col gap-1.5">
+            <input id="seekSlider" type="range" min="0" max="1000" value="0" class="studio-slider w-full" aria-label="播放進度條" />
+            <div class="flex items-center justify-between text-[10px] font-mono text-slate-400">
+              <span>0:00</span>
+              <span class="text-sky-400">▲ 0:30 (15:50 淡入點)</span>
+              <span class="text-rose-400">▲ 0:40 (15:40 淡出點)</span>
+              <span id="endMarkerText">END</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Primary Transport Controls: Play, Pause, Stop, Loop -->
+        <div class="grid grid-cols-4 gap-2">
+          <button id="playDirectBtn" type="button" class="console-btn py-2.5 px-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs sm:text-sm flex flex-col items-center justify-center gap-0.5">
+            <span>▶ 播放</span>
+            <span class="text-[10px] font-mono opacity-80">PLAY</span>
+          </button>
+
+          <button id="pauseBtn" type="button" class="console-btn py-2.5 px-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs sm:text-sm border border-white/10 flex flex-col items-center justify-center gap-0.5">
+            <span>⏸ 暫停</span>
+            <span class="text-[10px] font-mono text-slate-400">PAUSE</span>
+          </button>
+
+          <button id="stopResetBtn" type="button" class="console-btn py-2.5 px-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs sm:text-sm border border-white/10 flex flex-col items-center justify-center gap-0.5">
+            <span>⏹ 停止歸零</span>
+            <span class="text-[10px] font-mono text-slate-400">STOP</span>
+          </button>
+
+          <button id="loopToggleBtn" type="button" class="console-btn py-2.5 px-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs sm:text-sm border border-white/10 flex flex-col items-center justify-center gap-0.5">
+            <span id="loopBtnLabel">🔁 Loop: OFF</span>
+            <span class="text-[10px] font-mono text-slate-400">單曲循環</span>
+          </button>
+        </div>
+
+        <!-- Smooth Fade-In / Fade-Out Controls & Duration Setting -->
+        <div class="rounded-xl bg-slate-900/70 border border-white/10 p-3 flex flex-col gap-2.5">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-xs font-bold text-slate-200">平滑淡入 / 淡出控制 (Smooth Fade)</span>
+            <label class="flex items-center gap-1.5 text-xs text-slate-300">
+              <span>淡變時長:</span>
+              <select id="fadeDurationSelect" class="bg-slate-950 border border-white/15 rounded-lg px-2 py-1 text-xs font-mono text-amber-300 focus:outline-none focus:border-amber-400">
+                <option value="2">2.0 秒</option>
+                <option value="3.5" selected>3.5 秒</option>
+                <option value="5">5.0 秒</option>
+                <option value="7">7.0 秒</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2.5">
+            <button id="fadeInBtn" type="button" class="console-btn py-2.5 px-3 rounded-xl bg-gradient-to-r from-sky-500/25 to-cyan-500/20 hover:from-sky-500/35 hover:to-cyan-500/30 border border-sky-400/40 text-sky-200 font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5">
+              <span>📈 淡入播放 (Fade In)</span>
+            </button>
+
+            <button id="fadeOutBtn" type="button" class="console-btn py-2.5 px-3 rounded-xl bg-gradient-to-r from-rose-500/25 to-orange-500/20 hover:from-rose-500/35 hover:to-orange-500/30 border border-rose-400/40 text-rose-200 font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5">
+              <span>📉 淡出停止 (Fade Out)</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Two Rundown Macro Shortcut Buttons (15:40 & 15:50) -->
+        <div class="rounded-xl bg-gradient-to-br from-amber-500/10 via-slate-900/80 to-sky-500/10 border border-amber-400/30 p-3 flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-mono uppercase tracking-wider text-amber-300 font-bold">⚡ 流程快捷鍵 (RUNDOWN MACROS)</span>
+            <span class="text-[11px] text-slate-400">自動鎖定《主你知道.mp3》</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <!-- Shortcut 1: Play 40s then Fade Out -->
+            <button id="macro40sFadeOutBtn" type="button" class="console-btn text-left p-3 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/50 transition flex flex-col justify-between gap-1">
+              <div class="flex items-center justify-between">
+                <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-amber-400 text-slate-950">15:40 CUE</span>
+                <span class="text-[11px] font-mono text-amber-200">0:00 → 0:40</span>
+              </div>
+              <div class="text-xs sm:text-sm font-extrabold text-white mt-0.5">播放 40 秒後淡出</div>
+              <div class="text-[11px] text-amber-200/80">從頭播放，滿 40 秒自動平滑 Fade Out</div>
+            </button>
+
+            <!-- Shortcut 2: Start at 0:30 with Fade In -->
+            <button id="macro30sFadeInBtn" type="button" class="console-btn text-left p-3 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 border border-sky-400/50 transition flex flex-col justify-between gap-1">
+              <div class="flex items-center justify-between">
+                <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-sky-400 text-slate-950">15:50 CUE</span>
+                <span class="text-[11px] font-mono text-sky-200">0:30 → 4:30</span>
+              </div>
+              <div class="text-xs sm:text-sm font-extrabold text-white mt-0.5">從 30 秒開始淡入播放</div>
+              <div class="text-[11px] text-sky-200/80">跳至 0:30 淡入並切換 V1→C→V2→C 歌詞</div>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. POST CHORUS RUNDOWN TIMELINE (Display Only - No Check-off Required) -->
+      <section class="studio-panel rounded-2xl p-5 flex flex-col gap-3">
+        <div class="flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-5 rounded-full bg-gradient-to-b from-sky-300 to-indigo-500"></span>
+            <div>
+              <h2 class="text-base font-bold text-white tracking-wide">Post Chorus 流程總表</h2>
+              <p class="text-[11px] text-slate-400">純時間軸檢視（無需勾選確認 · 點擊 💻 電腦 Cue 可快速聯動）</p>
+            </div>
+          </div>
+          <span class="px-2.5 py-1 rounded-lg bg-slate-900/90 border border-white/10 text-[11px] font-mono text-slate-300">15:35 – 17:10</span>
+        </div>
+
+        <div id="rundownTimelineContainer" class="max-h-[430px] overflow-y-auto pr-1 flex flex-col gap-2">
+          <!-- Populated dynamically by JS -->
+        </div>
+      </section>
+    </div>
+
+    <!-- RIGHT COLUMN (7 cols on xl): All 6 Performance Songs Lyrics & Stage Teleprompter -->
+    <div class="xl:col-span-7 flex flex-col gap-5">
+      <section class="studio-panel rounded-2xl p-5 flex flex-col gap-4 h-full">
+        <!-- Lyrics Section Header -->
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-5 rounded-full bg-gradient-to-b from-amber-300 to-rose-400"></span>
+            <div>
+              <h2 class="text-base sm:text-lg font-bold text-white tracking-wide">全部演出歌曲歌詞及分段（Verse / Chorus）</h2>
+              <p class="text-xs text-slate-400">共 6 首表演曲目 · 支援段落編排、範本匯入及雙螢幕 Extended Mode 投影</p>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <button id="downloadTemplateBtn" type="button" class="console-btn px-3 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-xs font-bold text-emerald-200 border border-emerald-400/40 flex items-center gap-1.5" title="下載已排好 6 首歌標記的 .txt 範本，填好後可隨時匯入">
+              <span>📄 下載歌詞範本 .txt</span>
+            </button>
+
+            <button id="importLyricsFileBtn" type="button" class="console-btn px-3 py-2 rounded-xl bg-teal-500/20 hover:bg-teal-500/30 text-xs font-bold text-teal-200 border border-teal-400/40 flex items-center gap-1.5">
+              <span>📂 匯入 .txt / .json</span>
+            </button>
+
+            <button id="openBatchImportBtn" type="button" class="console-btn px-3 py-2 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 text-xs font-bold text-sky-200 border border-sky-400/40 flex items-center gap-1.5">
+              <span>📋 批量貼上全部歌詞</span>
+            </button>
+
+            <button id="openEditLyricsBtn" type="button" class="console-btn px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-amber-300 border border-amber-400/35 flex items-center gap-1.5">
+              <span>✏️ 編輯單首段落</span>
+            </button>
+
+            <button id="openTeleprompterBtn" type="button" class="console-btn px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 text-xs font-extrabold flex items-center gap-1.5 shadow-lg shadow-amber-500/20">
+              <span>🖥️ 全螢幕提詞投影 (Extended Mode)</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 6 Performance Song Selector Tabs -->
+        <div id="songTabsContainer" class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <!-- Populated dynamically by JS -->
+        </div>
+
+        <!-- Active Song Metadata Banner -->
+        <div id="activeSongBanner" class="studio-recessed rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <!-- Populated dynamically by JS -->
+        </div>
+
+        <!-- Active Song Verse / Chorus Cards -->
+        <div id="lyricsSectionsContainer" class="flex-1 flex flex-col gap-3 overflow-y-auto max-h-[640px] pr-1">
+          <!-- Populated dynamically by JS -->
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- MODAL 1: EDIT / PASTE LYRICS & SMART AUTO-SPLIT -->
+  <div id="editLyricsModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-md p-4">
+    <div class="studio-panel rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col border border-amber-400/30 shadow-2xl">
+      <!-- Modal Header -->
+      <div class="px-5 py-4 border-b border-white/10 flex items-center justify-between gap-3">
+        <div>
+          <h3 id="modalSongTitle" class="text-base sm:text-lg font-extrabold text-white">編輯歌曲段落歌詞</h3>
+          <p class="text-xs text-slate-400">修改後會自動儲存於本機瀏覽器，並同步更新 Extended Mode 大螢幕投影</p>
+        </div>
+        <button id="closeEditModalBtn" type="button" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white">✕</button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-5 overflow-y-auto flex-1 flex flex-col gap-4">
+        <!-- Smart Auto-Split Paste Box -->
+        <div class="rounded-xl bg-amber-500/10 border border-amber-400/30 p-3.5 flex flex-col gap-2">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <span class="text-xs font-bold text-amber-300">⚡ 一鍵貼上整首自動分段 (Smart Auto-Split)</span>
+            <button id="runSmartSplitBtn" type="button" class="px-3 py-1 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-extrabold">套用自動分段至下方</button>
+          </div>
+          <textarea id="bulkPasteTextarea" rows="3" placeholder="在此貼上整首完整歌詞（以空行分隔段落，或包含 Verse / Chorus 標記），按「套用自動分段至下方」即可自動拆入各段落..." class="w-full rounded-xl bg-slate-950/90 border border-white/15 p-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-400"></textarea>
+        </div>
+
+        <!-- Individual Section Editors -->
+        <div id="modalSectionsList" class="flex flex-col gap-3">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="px-5 py-3.5 border-t border-white/10 flex flex-wrap items-center justify-between gap-2 bg-slate-950/60 rounded-b-2xl">
+        <div class="flex items-center gap-2">
+          <button id="addSectionBtn" type="button" class="px-3 py-2 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-400/30 text-xs font-bold">+ 新增段落 (Verse / Chorus)</button>
+          <button id="exportBackupBtn" type="button" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-white/10 text-xs font-semibold">匯出 JSON 備份</button>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="cancelEditModalBtn" type="button" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold">取消</button>
+          <button id="saveLyricsBtn" type="button" class="px-5 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-extrabold">儲存歌詞設定</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 1B: BATCH IMPORT ALL 6 SONGS LYRICS AT ONCE -->
+  <div id="batchImportModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-md p-4">
+    <div class="studio-panel rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col border border-sky-400/35 shadow-2xl">
+      <div class="px-5 py-4 border-b border-white/10 flex items-center justify-between gap-3">
+        <div>
+          <h3 class="text-base sm:text-lg font-extrabold text-white">📋 批量貼上全部 6 首歌曲完整歌詞</h3>
+          <p class="text-xs text-slate-400">依下方標記貼入各首歌詞即可一次自動分配至所有歌曲的 Verse / Chorus</p>
+        </div>
+        <button id="closeBatchModalBtn" type="button" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white">✕</button>
+      </div>
+
+      <div class="p-5 overflow-y-auto flex-1 flex flex-col gap-3">
+        <div class="rounded-xl bg-sky-500/10 border border-sky-400/30 p-3 text-xs text-sky-200 leading-relaxed">
+          <div class="font-bold text-sky-300 mb-1">匯入格式說明（每首歌以 <code class="px-1.5 py-0.5 rounded bg-black/50 text-amber-300">=== 1 ===</code> 至 <code class="px-1.5 py-0.5 rounded bg-black/50 text-amber-300">=== 6 ===</code> 分隔，段落之間留一空行）：</div>
+          <div class="text-[11px] text-slate-300 font-mono">
+            === 1 === （《主你知道》） &nbsp;|&nbsp; === 2 === （《當你走到無力》） &nbsp;|&nbsp; === 3 === （《神啊！你在哪兒？》）<br/>
+            === 4 === （《愛叫我勇敢踏前》） &nbsp;|&nbsp; === 5 === （I Just Need to Glorify You） &nbsp;|&nbsp; === 6 === （《來自天上的信》）
+          </div>
+        </div>
+
+        <textarea id="batchAllLyricsTextarea" rows="13" placeholder="=== 1 ===&#10;（在此貼上《主你知道》完整歌詞，段落間留空行）&#10;&#10;=== 2 ===&#10;（在此貼上《當你走到無力》完整歌詞，段落間留空行）&#10;&#10;=== 3 ===&#10;（在此貼上《神啊！你在哪兒？》完整歌詞）&#10;&#10;=== 4 ===&#10;（在此貼上《愛叫我勇敢踏前》完整歌詞）&#10;&#10;=== 5 ===&#10;（Paste full English lyrics of I Just Need to Glorify You here）&#10;&#10;=== 6 ===&#10;（在此貼上《來自天上的信》完整歌詞）" class="w-full rounded-xl bg-slate-950/90 border border-white/15 p-3 text-xs sm:text-sm text-white font-mono leading-relaxed focus:outline-none focus:border-sky-400"></textarea>
+      </div>
+
+      <div class="px-5 py-3.5 border-t border-white/10 flex items-center justify-end gap-2 bg-slate-950/60 rounded-b-2xl">
+        <button id="cancelBatchModalBtn" type="button" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold">取消</button>
+        <button id="applyBatchImportBtn" type="button" class="px-5 py-2 rounded-xl bg-sky-400 hover:bg-sky-300 text-slate-950 text-xs font-extrabold">一鍵分配並儲存全部歌詞</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: EXTENDED MODE STAGE TELEPROMPTER -->
+  <div id="teleprompterOverlay" class="fixed inset-0 z-50 hidden flex-col stage-spotlight text-white select-none">
+    <!-- Top Stage Bar -->
+    <div class="px-6 py-4 border-b border-white/10 bg-black/50 backdrop-blur-md flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <span class="px-2.5 py-1 rounded-lg bg-amber-400 text-slate-950 font-mono text-xs font-extrabold tracking-wider">EXTENDED STAGE VIEW</span>
+        <div>
+          <h2 id="tpSongTitle" class="text-lg sm:text-2xl font-extrabold text-white">《主你知道》</h2>
+          <p id="tpSongMeta" class="text-xs text-slate-400">15:50 純音樂配歌詞 · V1 → C → V2 → C</p>
+        </div>
+      </div>
+
+      <!-- Stage Controls -->
+      <div class="flex items-center gap-2.5 flex-wrap">
+        <div class="flex items-center gap-1 bg-slate-900/90 border border-white/15 rounded-xl p-1">
+          <button id="tpFontDownBtn" type="button" class="px-2.5 py-1 rounded-lg hover:bg-slate-800 text-xs font-bold text-slate-300">A-</button>
+          <span id="tpFontSizeLabel" class="px-2 text-xs font-mono text-amber-300">100%</span>
+          <button id="tpFontUpBtn" type="button" class="px-2.5 py-1 rounded-lg hover:bg-slate-800 text-xs font-bold text-slate-300">A+</button>
+        </div>
+
+        <button id="tpPrevSongBtn" type="button" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-white/15 text-xs font-bold">◀ 上一首</button>
+        <button id="tpNextSongBtn" type="button" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-white/15 text-xs font-bold">下一首 ▶</button>
+        <button id="tpFullscreenBtn" type="button" class="px-3 py-2 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 border border-sky-400/40 text-sky-200 text-xs font-bold">⛶ 瀏覽器全螢幕</button>
+        <button id="closeTeleprompterBtn" type="button" class="px-4 py-2 rounded-xl bg-rose-500/25 hover:bg-rose-500/40 border border-rose-400/40 text-rose-200 text-xs font-extrabold">關閉投影 (ESC)</button>
+      </div>
+    </div>
+
+    <!-- Section Quick Jump Pills -->
+    <div id="tpSectionPills" class="px-6 py-3 bg-black/30 border-b border-white/5 flex items-center justify-center gap-2 flex-wrap">
+      <!-- Populated dynamically -->
+    </div>
+
+    <!-- Main Stage Lyrics Viewport -->
+    <div id="tpMainStage" class="flex-1 overflow-y-auto px-6 sm:px-14 py-10 flex flex-col items-center justify-center text-center">
+      <!-- Populated dynamically -->
+    </div>
+
+    <!-- Bottom Navigation Hint -->
+    <div class="px-6 py-3 border-t border-white/10 bg-black/60 flex items-center justify-between text-xs text-slate-400">
+      <span>操作提示：使用鍵盤 <kbd class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-200">←</kbd> / <kbd class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-200">→</kbd> 切換段落，或點擊下方按鈕</span>
+      <div class="flex items-center gap-2">
+        <button id="tpPrevSectionBtn" type="button" class="px-4 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold">▲ 上一段落</button>
+        <button id="tpNextSectionBtn" type="button" class="px-4 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold">下一段落 ▼</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Non-Intrusive Toast Notification Banner -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none max-w-sm"></div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // =========================================================================
+      // 1. DATA DEFINITIONS: TRACKS, RUNDOWN TIMELINE & ALL 6 PERFORMANCE SONGS
+      // =========================================================================
+      const AUDIO_TRACKS = [
+        {
+          id: 0,
+          fileName: '主你知道.mp3',
+          defaultSrc: './主你知道.mp3',
+          customUrl: null,
+          cueHint: '15:40 頭40秒 · 15:50 0:30起'
+        },
+        {
+          id: 1,
+          fileName: '來自天上的信.mp3',
+          defaultSrc: './來自天上的信.mp3',
+          customUrl: null,
+          cueHint: '17:10 延伸活動背景播放'
+        }
+      ];
+
+      const RUNDOWN_ITEMS = [
+        { time: '1535', displayTime: '15:35', content: 'sound check (mic, computer)', pic: 'MC、電腦', remark: 'PPT 用 extended mode', isComputerCue: true, actionType: 'teleprompter' },
+        { time: '1540', displayTime: '15:40', content: '關掉所有燈光', pic: '燈光', remark: '', isComputerCue: false },
+        { time: '1540', displayTime: '15:40+', content: '讀“演出禮儀”', pic: 'MC', remark: '', isComputerCue: false },
+        { time: '1540', displayTime: '15:40+', content: '純音樂《主你知道》', pic: '電腦', remark: '只播頭 30~40 秒', isComputerCue: true, actionType: 'macro40s' },
+        { time: '1540', displayTime: '15:40+', content: 'MC 上台', pic: 'MC', remark: '', isComputerCue: false },
+        { time: '1545', displayTime: '15:45', content: '開台燈', pic: '燈光', remark: '', isComputerCue: false },
+        { time: '1545', displayTime: '15:45+', content: '結束純音樂', pic: '電腦', remark: 'Fade out', isComputerCue: true, actionType: 'fadeout' },
+        { time: '1545', displayTime: '15:45+', content: '引子', pic: 'MC', remark: '', isComputerCue: false },
+        { time: '1545', displayTime: '15:45+', content: '關台燈、MC 落台', pic: '燈光、MC', remark: '落台後 MC pass mic to ST1', isComputerCue: false },
+        { time: '1550', displayTime: '15:50', content: '純音樂《主你知道》(0:30 ~ 4:30) · Story Teller 1、busking team 上台', pic: '電腦、ST1 + busking', remark: '同時間 show 歌詞 V1 C V2 C', isComputerCue: true, actionType: 'macro30s' },
+        { time: '1550', displayTime: '15:50+', content: '開台燈', pic: '燈光', remark: '', isComputerCue: false },
+        { time: '1555', displayTime: '15:55', content: '信 1', pic: 'ST1', remark: '', isComputerCue: false },
+        { time: '1555', displayTime: '15:55+', content: 'ST1 落台', pic: 'ST1', remark: '落台後 ST1 pass mic to ST2', isComputerCue: false },
+        { time: '1600', displayTime: '16:00', content: '【當你走到無力】（原表誤植：當你感到無力）', pic: 'busking', remark: '顯示歌詞', isComputerCue: true, songId: 'song2' },
+        { time: '1610', displayTime: '16:10', content: 'Story Teller 2 上台 · 信 2', pic: 'ST2', remark: '', isComputerCue: false },
+        { time: '1615', displayTime: '16:15', content: 'Story Teller 2 落台 · 【神啊!你在哪兒?】', pic: 'ST2、busking', remark: '落台後 ST2 pass mic to ST3 · 顯示歌詞', isComputerCue: true, songId: 'song3' },
+        { time: '1625', displayTime: '16:25', content: 'Story Teller 3 上台 · 信 3 · Story Teller 3 落台', pic: 'ST3', remark: '落台後 ST3 pass mic to ST4', isComputerCue: false },
+        { time: '1630', displayTime: '16:30', content: '【愛叫我勇敢踏前】', pic: 'busking', remark: '顯示歌詞', isComputerCue: true, songId: 'song4' },
+        { time: '1640', displayTime: '16:40', content: 'Story Teller 4 上台 · 信 4 · Story Teller 4 落台', pic: 'ST4', remark: '落台後 ST4 pass mic to MC', isComputerCue: false },
+        { time: '1645', displayTime: '16:45', content: 'I Just Need to Glorify You (English Original)', pic: 'busking', remark: '顯示英文原版歌詞 · 之後關台燈、Vocal 落台、MC 上台', isComputerCue: true, songId: 'song5' },
+        { time: '1655', displayTime: '16:55', content: '開台燈 · 結束語', pic: '燈光、MC', remark: '', isComputerCue: false },
+        { time: '1700', displayTime: '17:00', content: '【主祢知道】', pic: 'busking', remark: '現場演唱 · 開所有燈光', isComputerCue: true, songId: 'song1' },
+        { time: '1710', displayTime: '17:10', content: '講解延伸活動（同學也可寫信寄給上帝）· 播《來自天上的信》', pic: 'MC、電腦', remark: '播《來自天上的信.mp3》並顯示歌詞', isComputerCue: true, actionType: 'playLetterSong' }
+      ];
+
+      const DEFAULT_SONGS = [
+        {
+          id: 'song1',
+          number: '01',
+          timeSlot: '15:50 & 17:00',
+          title: '《主你知道》',
+          subtitle: 'HKACM 香港基督徒音樂事工協會 · 曲/詞：Ode Wong, Glory Cheung',
+          themeSummary: '訴說主耶穌深知人內心的軟弱、疲乏與渴慕，在迷途之中親自尋找並賜下勇氣走上新方向。',
+          searchQuery: '主祢知道 HKACM 歌詞',
+          structureSummary: 'V1 → C → V2 → C (15:50 流程指定) / 17:00 完整演唱',
+          openingCue: '已載入起唱首段（出處：HKACM）— 可按每段右上角「✏️ 貼上/修改」或上方「📂 匯入 .txt / .json」補全其餘段落',
+          sections: [
+            {
+              label: 'Verse 1 (V1)',
+              type: 'verse',
+              cueNote: '15:50 純音樂 0:30 起同步顯示 V1（出處：HKACM）',
+              text: '軟弱主祢知道，疲乏主已知道\n更知道我渴慕，我心裡那愛慕\n這一切祢都知道'
+            },
+            {
+              label: 'Chorus (C)',
+              type: 'chorus',
+              cueNote: '副歌（由「耶穌親自尋找我…」起）',
+              text: ''
+            },
+            {
+              label: 'Verse 2 (V2)',
+              type: 'verse',
+              cueNote: '第二段主歌（接續 15:50 流程表 V1 C V2 C 順序）',
+              text: ''
+            },
+            {
+              label: 'Chorus (C)',
+              type: 'chorus',
+              cueNote: '副歌（15:50 結尾；17:00 現場演唱可按需要加入 V3 / Coda）',
+              text: ''
+            }
+          ]
+        },
+        {
+          id: 'song2',
+          number: '02',
+          timeSlot: '16:00',
+          title: '《當你走到無力》',
+          subtitle: 'Red Sea 原創粵語詩歌 · 曲/詞：唐瑛琦（已更正原流程表誤植歌名）',
+          themeSummary: '安慰在人生路上感到孤單、空虛與疲乏的人，提醒只要相信並伸手接受，耶穌必擔當軟弱帶領展翅高飛。',
+          searchQuery: '當你走到無力 Red Sea 歌詞',
+          structureSummary: 'Verse 1 → Verse 2 → Chorus',
+          openingCue: '已載入起唱首兩句（出處：Red Sea / 唐瑛琦）— 按「✏️ 貼上/修改」即可直接補全各段歌詞',
+          sections: [
+            {
+              label: 'Verse 1',
+              type: 'verse',
+              cueNote: '起唱主歌（出處：Red Sea / 唐瑛琦）',
+              text: '當你走到無力繼續下去，當你感到寂寞困惱空虛，\n只要相信神隨時扶助你，願助你解開困惑拋開痛悲。'
+            },
+            {
+              label: 'Verse 2',
+              type: 'verse',
+              cueNote: '第二段主歌（由「當你跑到疲乏難再下去…」起）',
+              text: ''
+            },
+            {
+              label: 'Chorus',
+              type: 'chorus',
+              cueNote: '副歌（由「別害怕！祂知你難受…」起進入副歌）',
+              text: ''
+            }
+          ]
+        },
+        {
+          id: 'song3',
+          number: '03',
+          timeSlot: '16:15',
+          title: '《神啊！你在哪兒？》',
+          subtitle: '盧永亨作品 · 收錄於《團契遊樂園 5.1 還記得嗎》',
+          themeSummary: '從身處絕境與失意時的痛苦呼喊出發，轉化為對神同在與恩典的信靠，相信主手總會守在身旁。',
+          searchQuery: '神啊 你在哪兒 盧永亨 歌詞',
+          structureSummary: 'Verse 1 → Verse 2 → Chorus 1 → Chorus 2',
+          openingCue: '已載入起唱首兩句（出處：盧永亨）— 按「✏️ 貼上/修改」即可直接補全各段歌詞',
+          sections: [
+            {
+              label: 'Verse 1',
+              type: 'verse',
+              cueNote: '起唱主歌（出處：盧永亨）',
+              text: '我的天，為何總下著雨，遙望長空，神啊！你在哪兒？\n如若這匆匆生命真有豐盛意義，何以要面對沉痛失意。'
+            },
+            {
+              label: 'Verse 2',
+              type: 'verse',
+              cueNote: '第二段主歌（由「我的心，像迷失在絕處…」起）',
+              text: ''
+            },
+            {
+              label: 'Chorus 1',
+              type: 'chorus',
+              cueNote: '副歌第一段（由「我沒法控制狂風的方向…」起）',
+              text: ''
+            },
+            {
+              label: 'Chorus 2',
+              type: 'chorus',
+              cueNote: '副歌第二段（由「我沒法掌管潮水的升降…」起）',
+              text: ''
+            }
+          ]
+        },
+        {
+          id: 'song4',
+          number: '04',
+          timeSlot: '16:30',
+          title: '《愛叫我勇敢踏前》',
+          subtitle: '同心圓 TWS 敬拜者使團',
+          themeSummary: '表達即使前路如曠野般充滿風浪，因著神的愛與話語如雲柱火柱般導航，便能得著勇氣無懼前行。',
+          searchQuery: '愛叫我勇敢踏前 同心圓 歌詞',
+          structureSummary: 'Verse → Chorus',
+          openingCue: '已載入起唱首兩句（出處：同心圓 TWS 敬拜者使團）— 按「✏️ 貼上/修改」即可直接補全各段歌詞',
+          sections: [
+            {
+              label: 'Verse',
+              type: 'verse',
+              cueNote: '起唱主歌（出處：同心圓 TWS 敬拜者使團）',
+              text: '前望需要勇氣，等待時需盼望\n猶幸一生同行，是祢給我力量'
+            },
+            {
+              label: 'Chorus',
+              type: 'chorus',
+              cueNote: '副歌（由「祢的愛叫我勇敢踏前…」起）',
+              text: ''
+            }
+          ]
+        },
+        {
+          id: 'song5',
+          number: '05',
+          timeSlot: '16:45',
+          title: 'I Just Need to Glorify You',
+          subtitle: '曲/詞：柳慧敏 Wilma Liu ·《敬拜詩選─希伯崙堂短詩集》#33 (English Original)',
+          themeSummary: '回應神無條件的接納——主不要求我們先變得完美或領先，我們只需單純回應祂的愛，活出榮耀神的生命。',
+          searchQuery: 'I Just Need to Glorify You Wilma Liu lyrics',
+          structureSummary: 'Verse 1 → Chorus → Verse 2 → Chorus → Bridge / Outro',
+          openingCue: 'Opening lines loaded (by Wilma Liu) — Click "✏️ 貼上/修改" on any card to paste the full English lyrics',
+          sections: [
+            {
+              label: 'Verse 1',
+              type: 'verse',
+              cueNote: 'Opening English Verse 1 (by Wilma Liu)',
+              text: "I don't need to be the best to be accepted.\nI don't need to be perfect to be accepted."
+            },
+            {
+              label: 'Chorus',
+              type: 'chorus',
+              cueNote: 'Main English Chorus ("I just need to glorify You...")',
+              text: ''
+            },
+            {
+              label: 'Verse 2',
+              type: 'verse',
+              cueNote: 'English Verse 2',
+              text: ''
+            },
+            {
+              label: 'Chorus',
+              type: 'chorus',
+              cueNote: 'Repeat Main English Chorus',
+              text: ''
+            },
+            {
+              label: 'Bridge / Outro',
+              type: 'bridge',
+              cueNote: 'Ending worship tag before stage lights dim for MC closing',
+              text: ''
+            }
+          ]
+        },
+        {
+          id: 'song6',
+          number: '06',
+          timeSlot: '17:10',
+          title: '《來自天上的信》',
+          subtitle: '鹹蛋音樂事工 SEMM · 曲/詞：Glory Cheung（配合寫信寄給上帝延伸活動）',
+          themeSummary: '以天父第一身向孩子寫信的視角，溫柔回應人的害怕與孤單，宣告神早已看見眼淚並張開雙手擁抱等候。',
+          searchQuery: '來自天上的信 鹹蛋音樂 歌詞',
+          structureSummary: 'Verse → Chorus → Coda',
+          openingCue: '已載入起唱首兩句（出處：鹹蛋音樂事工 SEMM）— 按「✏️ 貼上/修改」即可直接補全各段歌詞',
+          sections: [
+            {
+              label: 'Verse',
+              type: 'verse',
+              cueNote: '17:10 播放《來自天上的信.mp3》起唱（出處：SEMM / Glory Cheung）',
+              text: '你不需掙扎，可安躺於我手\n你知道嗎？你多麼寶貴，單單珍惜愛你'
+            },
+            {
+              label: 'Chorus',
+              type: 'chorus',
+              cueNote: '副歌（由「什麼可隔絕我跟你…」起）',
+              text: ''
+            },
+            {
+              label: 'Coda',
+              type: 'bridge',
+              cueNote: '尾聲呼召（由「孩子回來吧…」起，配合同學寫信環節）',
+              text: ''
+            }
+          ]
+        }
+      ];
+
+      const STORAGE_KEY = 'post_chorus_lyrics_data_v5';
+      const FONT_THEME_KEY = 'post_chorus_font_theme_v5';
+
+      // =========================================================================
+      // 2. STATE MANAGEMENT
+      // =========================================================================
+      let currentTrackIndex = 0;
+      let isLoopEnabled = false;
+      let fadeAnimationId = null;
+      let fortySecMonitorActive = false;
+      let fortySecTriggeredFade = false;
+      let isSeeking = false;
+
+      let songsData = loadSongsFromStorage();
+      let activeSongId = 'song1';
+      let inlineEditingSectionIndex = -1;
+      let activeTeleprompterSectionIndex = 0;
+      let teleprompterFontScale = 100;
+      let lastRenderedMinute = -1;
+
+      // =========================================================================
+      // 3. DOM ELEMENT REFERENCES
+      // =========================================================================
+      const audioEl = document.getElementById('mainAudioPlayer');
+      const localMp3Input = document.getElementById('localMp3Input');
+      const loadLocalFilesBtn = document.getElementById('loadLocalFilesBtn');
+
+      const trackCard0 = document.getElementById('trackCard0');
+      const trackCard1 = document.getElementById('trackCard1');
+      const trackStatus0 = document.getElementById('trackStatus0');
+      const trackStatus1 = document.getElementById('trackStatus1');
+      const switchTrackBtn = document.getElementById('switchTrackBtn');
+      const currentTrackBadgeName = document.getElementById('currentTrackBadgeName');
+
+      const playbackStatePill = document.getElementById('playbackStatePill');
+      const autoFadeCountdownBadge = document.getElementById('autoFadeCountdownBadge');
+      const oledTrackTitle = document.getElementById('oledTrackTitle');
+      const gainPercentText = document.getElementById('gainPercentText');
+      const vuBars = Array.from(document.querySelectorAll('.vu-bar'));
+
+      const elapsedTimeDisplay = document.getElementById('elapsedTimeDisplay');
+      const remainingTimeDisplay = document.getElementById('remainingTimeDisplay');
+      const totalDurationDisplay = document.getElementById('totalDurationDisplay');
+      const endMarkerText = document.getElementById('endMarkerText');
+      const seekSlider = document.getElementById('seekSlider');
+
+      const playDirectBtn = document.getElementById('playDirectBtn');
+      const pauseBtn = document.getElementById('pauseBtn');
+      const stopResetBtn = document.getElementById('stopResetBtn');
+      const loopToggleBtn = document.getElementById('loopToggleBtn');
+      const loopBtnLabel = document.getElementById('loopBtnLabel');
+
+      const fadeDurationSelect = document.getElementById('fadeDurationSelect');
+      const fadeInBtn = document.getElementById('fadeInBtn');
+      const fadeOutBtn = document.getElementById('fadeOutBtn');
+      const macro40sFadeOutBtn = document.getElementById('macro40sFadeOutBtn');
+      const macro30sFadeInBtn = document.getElementById('macro30sFadeInBtn');
+
+      const masterWallClock = document.getElementById('masterWallClock');
+      const livePhaseText = document.getElementById('livePhaseText');
+      const rundownTimelineContainer = document.getElementById('rundownTimelineContainer');
+
+      const songTabsContainer = document.getElementById('songTabsContainer');
+      const activeSongBanner = document.getElementById('activeSongBanner');
+      const lyricsSectionsContainer = document.getElementById('lyricsSectionsContainer');
+
+      // Modals
+      const editLyricsModal = document.getElementById('editLyricsModal');
+      const modalSongTitle = document.getElementById('modalSongTitle');
+      const bulkPasteTextarea = document.getElementById('bulkPasteTextarea');
+      const runSmartSplitBtn = document.getElementById('runSmartSplitBtn');
+      const modalSectionsList = document.getElementById('modalSectionsList');
+      const addSectionBtn = document.getElementById('addSectionBtn');
+      const exportBackupBtn = document.getElementById('exportBackupBtn');
+      const saveLyricsBtn = document.getElementById('saveLyricsBtn');
+      const closeEditModalBtn = document.getElementById('closeEditModalBtn');
+      const cancelEditModalBtn = document.getElementById('cancelEditModalBtn');
+
+      const teleprompterOverlay = document.getElementById('teleprompterOverlay');
+      const tpSongTitle = document.getElementById('tpSongTitle');
+      const tpSongMeta = document.getElementById('tpSongMeta');
+      const tpFontDownBtn = document.getElementById('tpFontDownBtn');
+      const tpFontUpBtn = document.getElementById('tpFontUpBtn');
+      const tpFontSizeLabel = document.getElementById('tpFontSizeLabel');
+      const tpPrevSongBtn = document.getElementById('tpPrevSongBtn');
+      const tpNextSongBtn = document.getElementById('tpNextSongBtn');
+      const tpFullscreenBtn = document.getElementById('tpFullscreenBtn');
+      const closeTeleprompterBtn = document.getElementById('closeTeleprompterBtn');
+      const tpSectionPills = document.getElementById('tpSectionPills');
+      const tpMainStage = document.getElementById('tpMainStage');
+      const tpPrevSectionBtn = document.getElementById('tpPrevSectionBtn');
+      const tpNextSectionBtn = document.getElementById('tpNextSectionBtn');
+
+      // =========================================================================
+      // 4. HELPER UTILITIES
+      // =========================================================================
+      function showToast(message, type) {
+        const container = document.getElementById('toastContainer');
+        if (!container) return;
+        const colors = {
+          info: 'bg-slate-900/95 border-sky-400/40 text-sky-200',
+          success: 'bg-slate-900/95 border-emerald-400/40 text-emerald-200',
+          warn: 'bg-slate-900/95 border-amber-400/50 text-amber-200',
+          error: 'bg-slate-900/95 border-rose-400/50 text-rose-200'
+        };
+        const toast = document.createElement('div');
+        toast.className = 'pointer-events-auto px-4 py-3 rounded-xl border shadow-2xl text-xs font-semibold backdrop-blur-md transition-all duration-300 ' + (colors[type] || colors.info);
+        toast.textContent = message;
+        container.appendChild(toast);
+        setTimeout(function () {
+          toast.style.opacity = '0';
+          toast.style.transform = 'translateY(6px)';
+          setTimeout(function () {
+            if (toast.parentNode) toast.parentNode.removeChild(toast);
+          }, 280);
+        }, 3200);
+      }
+
+      function escapeHtml(str) {
+        return String(str || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
+      function formatTimeTenths(seconds) {
+        if (!isFinite(seconds) || seconds < 0) return '00:00.0';
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        const tenths = Math.floor((seconds - Math.floor(seconds)) * 10);
+        return String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0') + '.' + String(tenths);
+      }
+
+      function formatTimeShort(seconds) {
+        if (!isFinite(seconds) || seconds < 0) return '00:00';
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+      }
+
+      function getFadeDurationSec() {
+        const val = parseFloat(fadeDurationSelect.value);
+        return isFinite(val) && val > 0 ? val : 3.5;
+      }
+
+      function getActiveSong() {
+        for (let i = 0; i < songsData.length; i++) {
+          if (songsData[i].id === activeSongId) return songsData[i];
+        }
+        return songsData[0];
+      }
+
+      // =========================================================================
+      // 5. AUDIO ENGINE: TRACK SWITCHING, FADE IN/OUT & RUNDOWN MACROS
+      // =========================================================================
+      function cancelActiveFade() {
+        if (fadeAnimationId !== null) {
+          cancelAnimationFrame(fadeAnimationId);
+          fadeAnimationId = null;
+        }
+      }
+
+      function clearFortySecMonitor() {
+        fortySecMonitorActive = false;
+        fortySecTriggeredFade = false;
+        autoFadeCountdownBadge.classList.add('hidden');
+      }
+
+      function updateTrackSelectionUI() {
+        const track = AUDIO_TRACKS[currentTrackIndex];
+        oledTrackTitle.textContent = track.fileName;
+        currentTrackBadgeName.textContent = track.fileName;
+
+        if (currentTrackIndex === 0) {
+          trackCard0.className = 'track-select-card text-left p-3 rounded-xl border transition-all bg-amber-400/15 border-amber-400/60 shadow-lg shadow-amber-500/10';
+          trackCard1.className = 'track-select-card text-left p-3 rounded-xl border transition-all bg-slate-900/60 border-white/10 hover:border-white/25';
+        } else {
+          trackCard1.className = 'track-select-card text-left p-3 rounded-xl border transition-all bg-sky-400/15 border-sky-400/60 shadow-lg shadow-sky-500/10';
+          trackCard0.className = 'track-select-card text-left p-3 rounded-xl border transition-all bg-slate-900/60 border-white/10 hover:border-white/25';
+        }
+      }
+
+      function selectTrack(index, autoPlay) {
+        cancelActiveFade();
+        clearFortySecMonitor();
+        currentTrackIndex = index === 1 ? 1 : 0;
+        const track = AUDIO_TRACKS[currentTrackIndex];
+        const targetSrc = track.customUrl || track.defaultSrc;
+
+        audioEl.pause();
+        audioEl.src = targetSrc;
+        audioEl.loop = isLoopEnabled;
+        audioEl.volume = 1;
+        audioEl.load();
+
+        updateTrackSelectionUI();
+        updateTimeDisplay();
+
+        if (autoPlay) {
+          audioEl.play().catch(function () {
+            showToast('未能自動播放 ' + track.fileName + '，請確認同資料夾已有該 MP3 或按「載入本機 MP3」', 'warn');
+          });
+        }
+      }
+
+      function rampAudioVolume(fromVol, toVol, durationSec, onComplete) {
+        cancelActiveFade();
+        const startVol = Math.max(0, Math.min(1, fromVol));
+        const endVol = Math.max(0, Math.min(1, toVol));
+        const durationMs = Math.max(100, durationSec * 1000);
+        const startTime = performance.now();
+
+        audioEl.volume = startVol;
+
+        function step(now) {
+          const elapsed = now - startTime;
+          const progress = Math.min(1, elapsed / durationMs);
+          const eased = progress < 0.5
+            ? 2 * progress * progress
+            : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+
+          audioEl.volume = Math.max(0, Math.min(1, startVol + (endVol - startVol) * eased));
+
+          if (progress < 1) {
+            fadeAnimationId = requestAnimationFrame(step);
+          } else {
+            fadeAnimationId = null;
+            audioEl.volume = endVol;
+            if (typeof onComplete === 'function') onComplete();
+          }
+        }
+
+        fadeAnimationId = requestAnimationFrame(step);
+      }
+
+      function triggerFadeIn(startAtSeconds) {
+        const track = AUDIO_TRACKS[currentTrackIndex];
+        const fadeSec = getFadeDurationSec();
+
+        if (typeof startAtSeconds === 'number' && startAtSeconds >= 0) {
+          try {
+            audioEl.currentTime = startAtSeconds;
+          } catch (e) {}
+        }
+
+        const initialVol = audioEl.paused ? 0 : audioEl.volume;
+        audioEl.volume = initialVol;
+
+        audioEl.play().then(function () {
+          playbackStatePill.textContent = 'FADING IN';
+          playbackStatePill.className = 'px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider bg-sky-500/25 text-sky-300';
+          rampAudioVolume(initialVol, 1, fadeSec, function () {
+            updatePlaybackBadge();
+          });
+        }).catch(function () {
+          showToast('請先確認已載入 ' + track.fileName + '（可點右上「載入本機 MP3」選取檔案）', 'warn');
+        });
+      }
+
+      function triggerFadeOut() {
+        const fadeSec = getFadeDurationSec();
+        if (audioEl.paused) {
+          audioEl.volume = 1;
+          showToast('目前音軌已處於暫停狀態', 'info');
+          return;
+        }
+        playbackStatePill.textContent = 'FADING OUT';
+        playbackStatePill.className = 'px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider bg-rose-500/25 text-rose-300';
+
+        rampAudioVolume(audioEl.volume, 0, fadeSec, function () {
+          audioEl.pause();
+          audioEl.volume = 1;
+          clearFortySecMonitor();
+          updatePlaybackBadge();
+          showToast('已完成平滑淡出並暫停播放', 'success');
+        });
+      }
+
+      // Macro 1 (15:40 Cue): Play 《主你知道.mp3》 from 0:00 and auto Fade Out at 40.0s
+      function runMacro40sFadeOut() {
+        if (currentTrackIndex !== 0) {
+          selectTrack(0, false);
+        }
+        cancelActiveFade();
+        clearFortySecMonitor();
+
+        try {
+          audioEl.currentTime = 0;
+        } catch (e) {}
+        audioEl.volume = 1;
+
+        audioEl.play().then(function () {
+          fortySecMonitorActive = true;
+          fortySecTriggeredFade = false;
+          autoFadeCountdownBadge.classList.remove('hidden');
+          autoFadeCountdownBadge.textContent = '距離自動淡出：40.0s';
+          showToast('⚡ 已啟動 15:40 流程：《主你知道.mp3》播放 40 秒後將自動淡出', 'warn');
+        }).catch(function () {
+          showToast('無法播放《主你知道.mp3》，請點「載入本機 MP3」選取檔案', 'error');
+        });
+      }
+
+      // Macro 2 (15:50 Cue): Seek 《主你知道.mp3》 to 0:30 and Fade In, plus show V1 C V2 C lyrics
+      function runMacro30sFadeIn() {
+        if (currentTrackIndex !== 0) {
+          selectTrack(0, false);
+        }
+        cancelActiveFade();
+        clearFortySecMonitor();
+
+        activeSongId = 'song1';
+        inlineEditingSectionIndex = -1;
+        renderSongTabs();
+        renderActiveSongLyrics();
+
+        const seekAndFade = function () {
+          try {
+            audioEl.currentTime = 30;
+          } catch (e) {}
+          triggerFadeIn(30);
+          showToast('⚡ 已啟動 15:50 流程：《主你知道.mp3》由 0:30 淡入播放並顯示 V1→C→V2→C 歌詞', 'info');
+        };
+
+        if (audioEl.readyState >= 1) {
+          seekAndFade();
+        } else {
+          audioEl.addEventListener('loadedmetadata', function onMeta() {
+            audioEl.removeEventListener('loadedmetadata', onMeta);
+            seekAndFade();
+          });
+          audioEl.load();
+        }
+      }
+
+      function updatePlaybackBadge() {
+        if (fadeAnimationId !== null) return;
+        if (!audioEl.paused) {
+          playbackStatePill.textContent = 'PLAYING';
+          playbackStatePill.className = 'px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider bg-emerald-500/25 text-emerald-300';
+        } else {
+          playbackStatePill.textContent = 'PAUSED / READY';
+          playbackStatePill.className = 'px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider bg-slate-800 text-slate-300';
+        }
+      }
+
+      function updateTimeDisplay() {
+        const cur = audioEl.currentTime || 0;
+        const dur = audioEl.duration;
+
+        elapsedTimeDisplay.textContent = formatTimeTenths(cur);
+        gainPercentText.textContent = Math.round((audioEl.volume || 0) * 100) + '%';
+
+        if (isFinite(dur) && dur > 0) {
+          const rem = Math.max(0, dur - cur);
+          remainingTimeDisplay.textContent = formatTimeShort(rem);
+          totalDurationDisplay.textContent = formatTimeShort(dur);
+          endMarkerText.textContent = formatTimeShort(dur);
+          if (!isSeeking) {
+            seekSlider.value = Math.round((cur / dur) * 1000);
+          }
+        } else {
+          remainingTimeDisplay.textContent = '00:00';
+          totalDurationDisplay.textContent = '00:00';
+          endMarkerText.textContent = 'END';
+          if (!isSeeking) seekSlider.value = 0;
+        }
+
+        if (fortySecMonitorActive && !audioEl.paused) {
+          const remainingTo40 = Math.max(0, 40 - cur);
+          autoFadeCountdownBadge.textContent = '距離自動淡出：' + remainingTo40.toFixed(1) + 's';
+          if (cur >= 40 && !fortySecTriggeredFade) {
+            fortySecTriggeredFade = true;
+            fortySecMonitorActive = false;
+            autoFadeCountdownBadge.textContent = '正在自動淡出...';
+            triggerFadeOut();
+          }
+        }
+      }
+
+      function updateVuMeterAnimation() {
+        const isPlaying = !audioEl.paused && audioEl.volume > 0.01;
+        const vol = audioEl.volume || 0;
+        const now = performance.now() * 0.008;
+
+        for (let i = 0; i < vuBars.length; i++) {
+          const bar = vuBars[i];
+          if (!isPlaying) {
+            bar.style.height = '4px';
+            bar.style.opacity = '0.35';
+          } else {
+            const wave = 0.45 + 0.55 * Math.abs(Math.sin(now + i * 0.9));
+            const heightPx = Math.max(4, Math.round(vol * wave * 22));
+            bar.style.height = heightPx + 'px';
+            bar.style.opacity = '1';
+          }
+        }
+      }
+
+      function probeDefaultTracks() {
+        AUDIO_TRACKS.forEach(function (track, idx) {
+          const tester = new Audio();
+          tester.preload = 'metadata';
+          const statusEl = idx === 0 ? trackStatus0 : trackStatus1;
+          tester.addEventListener('loadedmetadata', function () {
+            statusEl.textContent = 'LOADED (' + formatTimeShort(tester.duration) + ')';
+            statusEl.className = 'text-[10px] font-mono text-emerald-400';
+          });
+          tester.addEventListener('error', function () {
+            statusEl.textContent = '待載入 MP3';
+            statusEl.className = 'text-[10px] font-mono text-amber-400';
+          });
+          tester.src = track.defaultSrc;
+        });
+      }
+
+      // =========================================================================
+      // 6. REAL-TIME WALL CLOCK & POST CHORUS RUNDOWN TIMELINE
+      // =========================================================================
+      function getCurrentActiveRundownIndex(nowDate) {
+        const hhmm = nowDate.getHours() * 100 + nowDate.getMinutes();
+        if (hhmm < 1535 || hhmm > 1730) return -1;
+        let matchedIdx = 0;
+        for (let i = 0; i < RUNDOWN_ITEMS.length; i++) {
+          const slotNum = parseInt(RUNDOWN_ITEMS[i].time, 10);
+          if (hhmm >= slotNum) {
+            matchedIdx = i;
+          }
+        }
+        return matchedIdx;
+      }
+
+      function updateWallClockAndSchedule() {
+        const now = new Date();
+        const hh = String(now.getHours()).padStart(2, '0');
+        const mm = String(now.getMinutes()).padStart(2, '0');
+        const ss = String(now.getSeconds()).padStart(2, '0');
+        masterWallClock.textContent = hh + ':' + mm + ':' + ss;
+
+        const activeIdx = getCurrentActiveRundownIndex(now);
+        if (activeIdx >= 0 && RUNDOWN_ITEMS[activeIdx]) {
+          livePhaseText.textContent = RUNDOWN_ITEMS[activeIdx].displayTime + ' · ' + RUNDOWN_ITEMS[activeIdx].content;
+        } else {
+          livePhaseText.textContent = '待機中（活動時段 15:35–17:10）';
+        }
+
+        if (now.getMinutes() !== lastRenderedMinute) {
+          lastRenderedMinute = now.getMinutes();
+          renderRundownTimeline();
+        }
+      }
+
+      function renderRundownTimeline() {
+        const activeIdx = getCurrentActiveRundownIndex(new Date());
+        let html = '';
+
+        for (let i = 0; i < RUNDOWN_ITEMS.length; i++) {
+          const item = RUNDOWN_ITEMS[i];
+          const isCurrent = i === activeIdx;
+          const cardClass = isCurrent
+            ? 'rounded-xl p-3 border border-amber-400/70 bg-amber-400/15 shadow-lg shadow-amber-500/10'
+            : item.isComputerCue
+              ? 'rounded-xl p-3 border border-sky-400/25 bg-slate-900/80 hover:border-sky-400/50 transition'
+              : 'rounded-xl p-3 border border-white/5 bg-slate-950/50';
+
+          let cueButtonHtml = '';
+          if (item.isComputerCue) {
+            cueButtonHtml = '<button type="button" data-rundown-idx="' + i + '" class="rundown-cue-btn shrink-0 px-2.5 py-1 rounded-lg bg-sky-500/20 hover:bg-sky-500/35 border border-sky-400/40 text-sky-200 text-[11px] font-bold transition">💻 執行 Cue</button>';
+          }
+
+          html +=
+            '<div class="' + cardClass + '">' +
+              '<div class="flex items-start justify-between gap-2">' +
+                '<div class="flex items-start gap-2.5 min-w-0">' +
+                  '<span class="font-mono text-xs font-bold px-2 py-0.5 rounded bg-black/50 ' + (isCurrent ? 'text-amber-300 border border-amber-400/40' : 'text-slate-300') + ' shrink-0">' + escapeHtml(item.displayTime) + '</span>' +
+                  '<div class="min-w-0">' +
+                    '<div class="text-xs sm:text-sm font-bold text-white leading-snug">' + escapeHtml(item.content) + '</div>' +
+                    '<div class="flex flex-wrap items-center gap-2 mt-1 text-[11px]">' +
+                      '<span class="text-slate-400">負責：<strong class="text-slate-200">' + escapeHtml(item.pic) + '</strong></span>' +
+                      (item.remark ? '<span class="px-1.5 py-0.5 rounded bg-amber-400/10 text-amber-300 border border-amber-400/20">' + escapeHtml(item.remark) + '</span>' : '') +
+                    '</div>' +
+                  '</div>' +
+                '</div>' +
+                cueButtonHtml +
+              '</div>' +
+            '</div>';
+        }
+
+        rundownTimelineContainer.innerHTML = html;
+
+        const cueBtns = rundownTimelineContainer.querySelectorAll('.rundown-cue-btn');
+        for (let j = 0; j < cueBtns.length; j++) {
+          cueBtns[j].addEventListener('click', function () {
+            const idx = parseInt(this.getAttribute('data-rundown-idx'), 10);
+            const cueItem = RUNDOWN_ITEMS[idx];
+            if (!cueItem) return;
+
+            if (cueItem.actionType === 'macro40s') {
+              runMacro40sFadeOut();
+            } else if (cueItem.actionType === 'macro30s') {
+              runMacro30sFadeIn();
+            } else if (cueItem.actionType === 'fadeout') {
+              triggerFadeOut();
+            } else if (cueItem.actionType === 'teleprompter') {
+              openTeleprompter();
+            } else if (cueItem.actionType === 'playLetterSong') {
+              activeSongId = 'song6';
+              inlineEditingSectionIndex = -1;
+              renderSongTabs();
+              renderActiveSongLyrics();
+              selectTrack(1, false);
+              triggerFadeIn(0);
+              showToast('已切換至《來自天上的信.mp3》淡入播放並顯示歌詞', 'info');
+            } else if (cueItem.songId) {
+              activeSongId = cueItem.songId;
+              inlineEditingSectionIndex = -1;
+              renderSongTabs();
+              renderActiveSongLyrics();
+              showToast('已切換歌詞面板至：' + cueItem.content, 'info');
+            }
+          });
+        }
+      }
+
+      // =========================================================================
+      // 7. LYRICS MANAGEMENT, PERSISTENCE & TELEPROMPTER
+      // =========================================================================
+      function loadSongsFromStorage() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed) && parsed.length === DEFAULT_SONGS.length) {
+              return parsed;
+            }
+          }
+        } catch (e) {}
+        return JSON.parse(JSON.stringify(DEFAULT_SONGS));
+      }
+
+      function saveSongsToStorage() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(songsData));
+        } catch (e) {
+          showToast('瀏覽器儲存空間受限，建議匯出 JSON 備份', 'warn');
+        }
+      }
+
+      function renderSongTabs() {
+        let html = '';
+        for (let i = 0; i < songsData.length; i++) {
+          const song = songsData[i];
+          const isActive = song.id === activeSongId;
+          let filledCount = 0;
+          for (let s = 0; s < song.sections.length; s++) {
+            if (song.sections[s].text && song.sections[s].text.trim().length > 0) {
+              filledCount++;
+            }
+          }
+
+          const btnClass = isActive
+            ? 'text-left p-3 rounded-xl border border-amber-400/70 bg-amber-400/15 shadow-lg shadow-amber-500/10 transition'
+            : 'text-left p-3 rounded-xl border border-white/10 bg-slate-900/60 hover:border-white/25 transition';
+
+          html +=
+            '<button type="button" data-song-id="' + song.id + '" class="song-tab-btn ' + btnClass + '">' +
+              '<div class="flex items-center justify-between gap-1 mb-1">' +
+                '<span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ' + (isActive ? 'bg-amber-400 text-slate-950' : 'bg-slate-800 text-slate-300') + '">' + escapeHtml(song.timeSlot) + '</span>' +
+                '<span class="text-[10px] font-mono ' + (filledCount > 0 ? 'text-emerald-400' : 'text-slate-500') + '">' + filledCount + '/' + song.sections.length + ' 段</span>' +
+              '</div>' +
+              '<div class="text-xs sm:text-sm font-extrabold text-white truncate">' + escapeHtml(song.title) + '</div>' +
+            '</button>';
+        }
+
+        songTabsContainer.innerHTML = html;
+
+        const tabs = songTabsContainer.querySelectorAll('.song-tab-btn');
+        for (let j = 0; j < tabs.length; j++) {
+          tabs[j].addEventListener('click', function () {
+            activeSongId = this.getAttribute('data-song-id');
+            inlineEditingSectionIndex = -1;
+            activeTeleprompterSectionIndex = 0;
+            renderSongTabs();
+            renderActiveSongLyrics();
+          });
+        }
+      }
+
+      function renderActiveSongLyrics() {
+        const song = getActiveSong();
+        if (!song) return;
+
+        const googleSearchUrl = 'https://www.google.com/search?q=' + encodeURIComponent(song.searchQuery || (song.title + ' 歌詞'));
+
+        activeSongBanner.innerHTML =
+          '<div class="min-w-0 flex-1">' +
+            '<div class="flex flex-wrap items-center gap-2">' +
+              '<span class="px-2 py-0.5 rounded bg-amber-400/20 text-amber-300 font-mono text-xs font-bold">' + escapeHtml(song.timeSlot) + '</span>' +
+              '<h3 class="text-lg sm:text-xl font-extrabold text-white">' + escapeHtml(song.title) + '</h3>' +
+            '</div>' +
+            '<p class="text-xs text-slate-400 mt-1">' + escapeHtml(song.subtitle) + '</p>' +
+            (song.themeSummary ? '<p class="text-xs text-slate-200 mt-1.5 leading-relaxed">📖 <strong class="text-amber-300">歌曲主題：</strong>' + escapeHtml(song.themeSummary) + '</p>' : '') +
+            '<p class="text-[11px] text-amber-200/80 mt-1">' + escapeHtml(song.openingCue) + '</p>' +
+          '</div>' +
+          '<div class="shrink-0 flex flex-col sm:items-end gap-2">' +
+            '<a href="' + googleSearchUrl + '" target="_blank" rel="noopener noreferrer" class="console-btn px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40 text-emerald-200 text-xs font-bold flex items-center gap-1.5">' +
+              '<span>🔍 Google 搜尋完整歌詞</span>' +
+            '</a>' +
+            '<div class="flex flex-col sm:items-end gap-0.5">' +
+              '<span class="text-[10px] font-mono uppercase tracking-wider text-slate-400">建議段落結構</span>' +
+              '<span class="px-2.5 py-1 rounded-lg bg-slate-900 border border-white/10 text-[11px] font-bold text-sky-300">' + escapeHtml(song.structureSummary) + '</span>' +
+            '</div>' +
+          '</div>';
+
+        let sectionsHtml = '';
+        for (let i = 0; i < song.sections.length; i++) {
+          const sec = song.sections[i];
+          const isChorus = sec.type === 'chorus';
+          const isBridge = sec.type === 'bridge';
+
+          const badgeClass = isChorus
+            ? 'bg-amber-400/20 text-amber-300 border-amber-400/40'
+            : isBridge
+              ? 'bg-purple-400/20 text-purple-300 border-purple-400/40'
+              : 'bg-sky-400/20 text-sky-300 border-sky-400/40';
+
+          const borderAccent = isChorus
+            ? 'border-l-4 border-l-amber-400'
+            : isBridge
+              ? 'border-l-4 border-l-purple-400'
+              : 'border-l-4 border-l-sky-400';
+
+          const hasLyrics = sec.text && sec.text.trim().length > 0;
+          const isInlineEditing = inlineEditingSectionIndex === i;
+
+          let bodyHtml = '';
+          if (isInlineEditing) {
+            bodyHtml =
+              '<div class="flex flex-col gap-2 pt-1">' +
+                '<textarea id="inlineSectionTextarea_' + i + '" rows="4" placeholder="直接在此貼上或輸入此段落的完整歌詞..." class="w-full rounded-xl bg-slate-950 border border-amber-400/60 p-3 text-sm sm:text-base text-white leading-relaxed focus:outline-none">' + escapeHtml(sec.text) + '</textarea>' +
+                '<div class="flex items-center justify-end gap-2">' +
+                  '<button type="button" class="inline-cancel-btn px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300">取消</button>' +
+                  '<button type="button" data-save-sec="' + i + '" class="inline-save-btn px-4 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-xs font-extrabold text-slate-950">儲存此段</button>' +
+                '</div>' +
+              '</div>';
+          } else if (hasLyrics) {
+            bodyHtml = '<div class="text-base sm:text-lg leading-relaxed text-slate-100 whitespace-pre-line font-medium tracking-wide pt-1">' + escapeHtml(sec.text) + '</div>';
+          } else {
+            bodyHtml =
+              '<div class="rounded-xl border border-dashed border-white/15 bg-black/25 p-4 text-center">' +
+                '<p class="text-xs text-slate-400">尚未填入此段歌詞 — 點擊右上角「✏️ 貼上/修改」即可直接輸入或貼上歌詞</p>' +
+              '</div>';
+          }
+
+          sectionsHtml +=
+            '<div class="rounded-2xl bg-slate-900/75 border border-white/10 ' + borderAccent + ' p-4 flex flex-col gap-2.5">' +
+              '<div class="flex flex-wrap items-center justify-between gap-2">' +
+                '<div class="flex items-center gap-2">' +
+                  '<span class="px-2.5 py-0.5 rounded-lg border text-xs font-mono font-bold ' + badgeClass + '">' + escapeHtml(sec.label) + '</span>' +
+                  '<span class="text-xs text-slate-400">' + escapeHtml(sec.cueNote || '') + '</span>' +
+                '</div>' +
+                '<div class="flex items-center gap-1.5">' +
+                  '<button type="button" data-inline-edit-sec="' + i + '" class="inline-edit-sec-btn px-2.5 py-1 rounded-lg bg-amber-400/15 hover:bg-amber-400/30 border border-amber-400/30 text-[11px] font-semibold text-amber-200 transition">✏️ 貼上/修改</button>' +
+                  '<button type="button" data-project-sec="' + i + '" class="project-sec-btn px-2.5 py-1 rounded-lg bg-white/5 hover:bg-amber-400/20 text-[11px] font-semibold text-slate-300 hover:text-amber-200 transition">🖥️ 投影此段</button>' +
+                '</div>' +
+              '</div>' +
+              bodyHtml +
+            '</div>';
+        }
+
+        lyricsSectionsContainer.innerHTML = sectionsHtml;
+
+        const editBtns = lyricsSectionsContainer.querySelectorAll('.inline-edit-sec-btn');
+        for (let eIdx = 0; eIdx < editBtns.length; eIdx++) {
+          editBtns[eIdx].addEventListener('click', function () {
+            const targetIdx = parseInt(this.getAttribute('data-inline-edit-sec'), 10);
+            inlineEditingSectionIndex = inlineEditingSectionIndex === targetIdx ? -1 : targetIdx;
+            renderActiveSongLyrics();
+            if (inlineEditingSectionIndex >= 0) {
+              const ta = document.getElementById('inlineSectionTextarea_' + inlineEditingSectionIndex);
+              if (ta) ta.focus();
+            }
+          });
+        }
+
+        const cancelBtns = lyricsSectionsContainer.querySelectorAll('.inline-cancel-btn');
+        for (let cIdx = 0; cIdx < cancelBtns.length; cIdx++) {
+          cancelBtns[cIdx].addEventListener('click', function () {
+            inlineEditingSectionIndex = -1;
+            renderActiveSongLyrics();
+          });
+        }
+
+        const saveBtns = lyricsSectionsContainer.querySelectorAll('.inline-save-btn');
+        for (let sIdx = 0; sIdx < saveBtns.length; sIdx++) {
+          saveBtns[sIdx].addEventListener('click', function () {
+            const secIdx = parseInt(this.getAttribute('data-save-sec'), 10);
+            const ta = document.getElementById('inlineSectionTextarea_' + secIdx);
+            if (ta && song.sections[secIdx]) {
+              song.sections[secIdx].text = ta.value.trim();
+              saveSongsToStorage();
+              inlineEditingSectionIndex = -1;
+              renderSongTabs();
+              renderActiveSongLyrics();
+              if (!teleprompterOverlay.classList.contains('hidden')) {
+                renderTeleprompter();
+              }
+              showToast('已儲存 ' + song.sections[secIdx].label + ' 歌詞！', 'success');
+            }
+          });
+        }
+
+        const projBtns = lyricsSectionsContainer.querySelectorAll('.project-sec-btn');
+        for (let j = 0; j < projBtns.length; j++) {
+          projBtns[j].addEventListener('click', function () {
+            activeTeleprompterSectionIndex = parseInt(this.getAttribute('data-project-sec'), 10) || 0;
+            openTeleprompter();
+          });
+        }
+      }
+
+      // =========================================================================
+      // 8. LYRICS EDITOR MODAL, SMART AUTO-SPLIT & .TXT / .JSON TEMPLATE TOOLS
+      // =========================================================================
+      let tempEditSections = [];
+
+      function openEditModal() {
+        const song = getActiveSong();
+        if (!song) return;
+        modalSongTitle.textContent = '編輯段落歌詞：' + song.title;
+        bulkPasteTextarea.value = '';
+        tempEditSections = JSON.parse(JSON.stringify(song.sections));
+        renderModalSectionEditors();
+        editLyricsModal.classList.remove('hidden');
+        editLyricsModal.classList.add('flex');
+      }
+
+      function closeEditModal() {
+        editLyricsModal.classList.add('hidden');
+        editLyricsModal.classList.remove('flex');
+      }
+
+      function renderModalSectionEditors() {
+        let html = '';
+        for (let i = 0; i < tempEditSections.length; i++) {
+          const sec = tempEditSections[i];
+          html +=
+            '<div class="rounded-xl bg-slate-900/90 border border-white/10 p-3.5 flex flex-col gap-2">' +
+              '<div class="flex flex-wrap items-center justify-between gap-2">' +
+                '<div class="flex items-center gap-2 flex-1 min-w-[200px]">' +
+                  '<input type="text" data-sec-idx="' + i + '" data-field="label" value="' + escapeHtml(sec.label) + '" class="modal-sec-input px-2.5 py-1 rounded-lg bg-slate-950 border border-white/15 text-xs font-mono font-bold text-amber-300 w-36" />' +
+                  '<select data-sec-idx="' + i + '" data-field="type" class="modal-sec-input px-2 py-1 rounded-lg bg-slate-950 border border-white/15 text-xs text-slate-300">' +
+                    '<option value="verse"' + (sec.type === 'verse' ? ' selected' : '') + '>Verse (主歌)</option>' +
+                    '<option value="chorus"' + (sec.type === 'chorus' ? ' selected' : '') + '>Chorus (副歌)</option>' +
+                    '<option value="bridge"' + (sec.type === 'bridge' ? ' selected' : '') + '>Bridge / Coda</option>' +
+                  '</select>' +
+                '</div>' +
+                '<button type="button" data-del-idx="' + i + '" class="modal-del-sec px-2 py-1 rounded-lg bg-rose-500/15 hover:bg-rose-500/30 text-rose-300 text-xs">刪除段落</button>' +
+              '</div>' +
+              '<textarea rows="3" data-sec-idx="' + i + '" data-field="text" placeholder="在此輸入或貼上此段落歌詞..." class="modal-sec-input w-full rounded-xl bg-slate-950 border border-white/15 p-2.5 text-sm text-white leading-relaxed focus:outline-none focus:border-amber-400">' + escapeHtml(sec.text) + '</textarea>' +
+            '</div>';
+        }
+        modalSectionsList.innerHTML = html;
+
+        const inputs = modalSectionsList.querySelectorAll('.modal-sec-input');
+        for (let j = 0; j < inputs.length; j++) {
+          inputs[j].addEventListener('input', function () {
+            const idx = parseInt(this.getAttribute('data-sec-idx'), 10);
+            const field = this.getAttribute('data-field');
+            if (tempEditSections[idx]) {
+              tempEditSections[idx][field] = this.value;
+            }
+          });
+        }
+
+        const delBtns = modalSectionsList.querySelectorAll('.modal-del-sec');
+        for (let k = 0; k < delBtns.length; k++) {
+          delBtns[k].addEventListener('click', function () {
+            if (tempEditSections.length <= 1) {
+              showToast('每首歌曲至少需保留一個段落', 'warn');
+              return;
+            }
+            const idx = parseInt(this.getAttribute('data-del-idx'), 10);
+            tempEditSections.splice(idx, 1);
+            renderModalSectionEditors();
+          });
+        }
+      }
+
+      function runSmartAutoSplit() {
+        const rawText = bulkPasteTextarea.value.trim();
+        if (!rawText) {
+          showToast('請先在上方文字框貼上整首歌詞', 'warn');
+          return;
+        }
+
+        const blocks = rawText.split(/\n\s*\n/).map(function (b) {
+          return b.trim();
+        }).filter(function (b) {
+          return b.length > 0;
+        });
+
+        for (let i = 0; i < blocks.length; i++) {
+          const cleanedBlock = blocks[i].replace(/^\[?(verse|chorus|bridge|coda|pre-chorus)[^\n]*\]?:?\s*\n?/i, '').trim();
+          if (i < tempEditSections.length) {
+            tempEditSections[i].text = cleanedBlock;
+          } else {
+            tempEditSections.push({
+              label: 'Section ' + (i + 1),
+              type: i % 2 === 1 ? 'chorus' : 'verse',
+              cueNote: '自動分段新增段落',
+              text: cleanedBlock
+            });
+          }
+        }
+
+        renderModalSectionEditors();
+        showToast('已自動將 ' + blocks.length + ' 段歌詞填入對應段落！請檢查後按「儲存歌詞設定」', 'success');
+      }
+
+      // =========================================================================
+      // 9. EXTENDED MODE TELEPROMPTER
+      // =========================================================================
+      function openTeleprompter() {
+        teleprompterOverlay.classList.remove('hidden');
+        teleprompterOverlay.classList.add('flex');
+        renderTeleprompter();
+      }
+
+      function closeTeleprompter() {
+        teleprompterOverlay.classList.add('hidden');
+        teleprompterOverlay.classList.remove('flex');
+        if (document.fullscreenElement) {
+          document.exitFullscreen().catch(function () {});
+        }
+      }
+
+      function renderTeleprompter() {
+        const song = getActiveSong();
+        if (!song) return;
+
+        if (activeTeleprompterSectionIndex >= song.sections.length) {
+          activeTeleprompterSectionIndex = 0;
+        }
+
+        tpSongTitle.textContent = song.title;
+        tpSongMeta.textContent = song.timeSlot + ' · ' + song.structureSummary;
+        tpFontSizeLabel.textContent = teleprompterFontScale + '%';
+
+        let pillsHtml = '';
+        for (let i = 0; i < song.sections.length; i++) {
+          const sec = song.sections[i];
+          const isCur = i === activeTeleprompterSectionIndex;
+          const pillClass = isCur
+            ? 'px-3.5 py-1.5 rounded-xl bg-amber-400 text-slate-950 font-mono text-xs font-extrabold shadow-lg shadow-amber-500/30'
+            : 'px-3.5 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-slate-300 border border-white/10 font-mono text-xs font-bold';
+          pillsHtml += '<button type="button" data-tp-idx="' + i + '" class="tp-pill-btn ' + pillClass + '">' + escapeHtml(sec.label) + '</button>';
+        }
+        tpSectionPills.innerHTML = pillsHtml;
+
+        const pillBtns = tpSectionPills.querySelectorAll('.tp-pill-btn');
+        for (let j = 0; j < pillBtns.length; j++) {
+          pillBtns[j].addEventListener('click', function () {
+            activeTeleprompterSectionIndex = parseInt(this.getAttribute('data-tp-idx'), 10) || 0;
+            renderTeleprompter();
+          });
+        }
+
+        const currentSec = song.sections[activeTeleprompterSectionIndex];
+        const baseFontPx = Math.round(42 * (teleprompterFontScale / 100));
+        const hasText = currentSec.text && currentSec.text.trim().length > 0;
+
+        tpMainStage.innerHTML =
+          '<div class="max-w-5xl w-full flex flex-col items-center gap-6">' +
+            '<span class="px-4 py-1 rounded-full bg-amber-400/15 border border-amber-400/40 text-amber-300 font-mono text-sm font-bold tracking-widest uppercase">' +
+              escapeHtml(currentSec.label) +
+            '</span>' +
+            (hasText
+              ? '<div style="font-size: ' + baseFontPx + 'px; line-height: 1.55;" class="font-bold text-white whitespace-pre-line tracking-wide drop-shadow-[0_4px_24px_rgba(0,0,0,0.8)]">' +
+                  escapeHtml(currentSec.text) +
+                '</div>'
+              : '<div class="p-8 rounded-2xl border border-dashed border-white/20 bg-white/5 max-w-xl">' +
+                  '<p class="text-xl font-bold text-amber-200 mb-2">此段落尚未填入歌詞</p>' +
+                  '<p class="text-sm text-slate-300">' + escapeHtml(currentSec.cueNote || '請先於主控台按「✏️ 貼上/修改」貼入歌詞') + '</p>' +
+                '</div>'
+            ) +
+          '</div>';
+      }
+
+      // =========================================================================
+      // 10. FONT THEME SWITCHER
+      // =========================================================================
+      function applyFontTheme(themeName, notify) {
+        const valid = ['serif', 'wenkai', 'maru'];
+        const chosen = valid.indexOf(themeName) >= 0 ? themeName : 'serif';
+        document.documentElement.setAttribute('data-font-theme', chosen);
+        try {
+          localStorage.setItem(FONT_THEME_KEY, chosen);
+        } catch (e) {}
+
+        const btns = document.querySelectorAll('.font-theme-btn');
+        for (let i = 0; i < btns.length; i++) {
+          const btn = btns[i];
+          const isMatch = btn.getAttribute('data-font-btn') === chosen;
+          btn.className = isMatch
+            ? 'font-theme-btn px-2.5 py-1 rounded-lg text-xs font-bold transition bg-amber-400 text-slate-950 shadow-sm'
+            : 'font-theme-btn px-2.5 py-1 rounded-lg text-xs font-semibold transition text-slate-300 hover:text-white';
+        }
+
+        if (notify) {
+          const names = {
+            serif: '典雅宋體 (Noto Serif TC)',
+            wenkai: '溫潤文楷 (LXGW WenKai TC)',
+            maru: '現代圓體 (Zen Maru Gothic)'
+          };
+          showToast('已切換字體為：' + names[chosen], 'info');
+        }
+      }
+
+      // =========================================================================
+      // 11. EVENT LISTENERS & INITIALIZATION
+      // =========================================================================
+      trackCard0.addEventListener('click', function () {
+        selectTrack(0, false);
+      });
+      trackCard1.addEventListener('click', function () {
+        selectTrack(1, false);
+      });
+      switchTrackBtn.addEventListener('click', function () {
+        const nextIdx = currentTrackIndex === 0 ? 1 : 0;
+        selectTrack(nextIdx, false);
+        showToast('已切換音軌至：' + AUDIO_TRACKS[nextIdx].fileName, 'info');
+      });
+
+      // Local MP3 File Loader
+      loadLocalFilesBtn.addEventListener('click', function () {
+        localMp3Input.click();
+      });
+
+      localMp3Input.addEventListener('change', function (e) {
+        const files = e.target.files;
+        if (!files || files.length === 0) return;
+
+        let matchedAny = false;
+        for (let i = 0; i < files.length; i++) {
+          const f = files[i];
+          const url = URL.createObjectURL(f);
+          if (f.name.indexOf('主你知道') >= 0 || f.name.indexOf('主祢知道') >= 0) {
+            AUDIO_TRACKS[0].customUrl = url;
+            trackStatus0.textContent = 'LOCAL FILE OK';
+            trackStatus0.className = 'text-[10px] font-mono text-emerald-400';
+            matchedAny = true;
+          } else if (f.name.indexOf('來自天上的信') >= 0) {
+            AUDIO_TRACKS[1].customUrl = url;
+            trackStatus1.textContent = 'LOCAL FILE OK';
+            trackStatus1.className = 'text-[10px] font-mono text-emerald-400';
+            matchedAny = true;
+          } else if (files.length === 1) {
+            AUDIO_TRACKS[currentTrackIndex].customUrl = url;
+            const st = currentTrackIndex === 0 ? trackStatus0 : trackStatus1;
+            st.textContent = 'LOCAL FILE OK';
+            st.className = 'text-[10px] font-mono text-emerald-400';
+            matchedAny = true;
+          }
+        }
+
+        if (matchedAny) {
+          selectTrack(currentTrackIndex, false);
+          showToast('已成功載入本機 MP3 音訊檔案！', 'success');
+        }
+        localMp3Input.value = '';
+      });
+
+      // Transport Controls
+      playDirectBtn.addEventListener('click', function () {
+        cancelActiveFade();
+        audioEl.volume = 1;
+        audioEl.play().catch(function () {
+          showToast('無法直接播放，請確認同資料夾已有 ' + AUDIO_TRACKS[currentTrackIndex].fileName + ' 或點「載入本機 MP3」', 'warn');
+        });
+      });
+
+      pauseBtn.addEventListener('click', function () {
+        cancelActiveFade();
+        audioEl.pause();
+        updatePlaybackBadge();
+      });
+
+      stopResetBtn.addEventListener('click', function () {
+        cancelActiveFade();
+        clearFortySecMonitor();
+        audioEl.pause();
+        try {
+          audioEl.currentTime = 0;
+        } catch (e) {}
+        audioEl.volume = 1;
+        updatePlaybackBadge();
+        updateTimeDisplay();
+      });
+
+      loopToggleBtn.addEventListener('click', function () {
+        isLoopEnabled = !isLoopEnabled;
+        audioEl.loop = isLoopEnabled;
+        if (isLoopEnabled) {
+          loopBtnLabel.textContent = '🔁 Loop: ON';
+          loopToggleBtn.className = 'console-btn py-2.5 px-2 rounded-xl bg-amber-400/20 border border-amber-400/60 text-amber-300 font-bold text-xs sm:text-sm flex flex-col items-center justify-center gap-0.5';
+          showToast('已開啟單曲循環 (Loop ON)', 'info');
+        } else {
+          loopBtnLabel.textContent = '🔁 Loop: OFF';
+          loopToggleBtn.className = 'console-btn py-2.5 px-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs sm:text-sm border border-white/10 flex flex-col items-center justify-center gap-0.5';
+          showToast('已關閉單曲循環 (Loop OFF)', 'info');
+        }
+      });
+
+      fadeInBtn.addEventListener('click', function () {
+        triggerFadeIn();
+      });
+
+      fadeOutBtn.addEventListener('click', function () {
+        triggerFadeOut();
+      });
+
+      macro40sFadeOutBtn.addEventListener('click', function () {
+        runMacro40sFadeOut();
+      });
+
+      macro30sFadeInBtn.addEventListener('click', function () {
+        runMacro30sFadeIn();
+      });
+
+      // Seek Slider
+      seekSlider.addEventListener('input', function () {
+        isSeeking = true;
+        const dur = audioEl.duration;
+        if (isFinite(dur) && dur > 0) {
+          const target = (parseFloat(seekSlider.value) / 1000) * dur;
+          elapsedTimeDisplay.textContent = formatTimeTenths(target);
+        }
+      });
+
+      seekSlider.addEventListener('change', function () {
+        const dur = audioEl.duration;
+        if (isFinite(dur) && dur > 0) {
+          try {
+            audioEl.currentTime = (parseFloat(seekSlider.value) / 1000) * dur;
+          } catch (e) {}
+        }
+        isSeeking = false;
+        updateTimeDisplay();
+      });
+
+      audioEl.addEventListener('play', updatePlaybackBadge);
+      audioEl.addEventListener('pause', updatePlaybackBadge);
+      audioEl.addEventListener('ended', function () {
+        clearFortySecMonitor();
+        updatePlaybackBadge();
+      });
+
+      // Edit Modal Events
+      document.getElementById('openEditLyricsBtn').addEventListener('click', openEditModal);
+      closeEditModalBtn.addEventListener('click', closeEditModal);
+      cancelEditModalBtn.addEventListener('click', closeEditModal);
+      runSmartSplitBtn.addEventListener('click', runSmartAutoSplit);
+
+      addSectionBtn.addEventListener('click', function () {
+        tempEditSections.push({
+          label: 'Section ' + (tempEditSections.length + 1),
+          type: 'verse',
+          cueNote: '自訂新增段落',
+          text: ''
+        });
+        renderModalSectionEditors();
+      });
+
+      saveLyricsBtn.addEventListener('click', function () {
+        const song = getActiveSong();
+        if (song) {
+          song.sections = tempEditSections;
+          saveSongsToStorage();
+          renderSongTabs();
+          renderActiveSongLyrics();
+          if (!teleprompterOverlay.classList.contains('hidden')) {
+            renderTeleprompter();
+          }
+          showToast('已儲存《' + song.title + '》段落歌詞！', 'success');
+        }
+        closeEditModal();
+      });
+
+      exportBackupBtn.addEventListener('click', function () {
+        const blob = new Blob([JSON.stringify(songsData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'post_chorus_lyrics_backup.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('已下載歌詞 JSON 備份檔', 'success');
+      });
+
+      // Batch Import All 6 Songs Modal Events & .txt/.json File Importer
+      const batchImportModal = document.getElementById('batchImportModal');
+      const batchAllLyricsTextarea = document.getElementById('batchAllLyricsTextarea');
+      const lyricsFileInput = document.getElementById('lyricsFileInput');
+
+      function parseAndApplyBatchText(raw) {
+        const markerRegex = /===\s*([1-6])\s*===/g;
+        let match;
+        const markers = [];
+        while ((match = markerRegex.exec(raw)) !== null) {
+          markers.push({
+            songNum: parseInt(match[1], 10),
+            headerStart: match.index,
+            contentStart: match.index + match[0].length
+          });
+        }
+
+        if (markers.length === 0) {
+          return 0;
+        }
+
+        let updatedCount = 0;
+        for (let m = 0; m < markers.length; m++) {
+          const songIdx = markers[m].songNum - 1;
+          const endPos = m + 1 < markers.length ? markers[m + 1].headerStart : raw.length;
+          const songBody = raw.slice(markers[m].contentStart, endPos).replace(/^[^\n]*\n?/, '').trim();
+          if (!songBody || !songsData[songIdx]) continue;
+
+          const blocks = songBody.split(/\n\s*\n/).map(function (b) {
+            return b.replace(/^\[?(verse|chorus|bridge|coda|pre-chorus)[^\n]*\]?:?\s*\n?/i, '').trim();
+          }).filter(function (b) {
+            return b.length > 0;
+          });
+
+          for (let b = 0; b < blocks.length; b++) {
+            if (b < songsData[songIdx].sections.length) {
+              songsData[songIdx].sections[b].text = blocks[b];
+            } else {
+              songsData[songIdx].sections.push({
+                label: 'Section ' + (b + 1),
+                type: b % 2 === 1 ? 'chorus' : 'verse',
+                cueNote: '匯入新增段落',
+                text: blocks[b]
+              });
+            }
+          }
+          updatedCount++;
+        }
+
+        if (updatedCount > 0) {
+          saveSongsToStorage();
+          renderSongTabs();
+          renderActiveSongLyrics();
+          if (!teleprompterOverlay.classList.contains('hidden')) {
+            renderTeleprompter();
+          }
+        }
+        return updatedCount;
+      }
+
+      document.getElementById('downloadTemplateBtn').addEventListener('click', function () {
+        const lines = [
+          '# Post Chorus 全部 6 首演出歌曲歌詞檔',
+          '# 使用方法：在各段落下方貼入完整歌詞（段落之間保留一空行），儲存後在控制台按「匯入 .txt / .json」即可一次載入全部歌曲。',
+          ''
+        ];
+        for (let i = 0; i < songsData.length; i++) {
+          const s = songsData[i];
+          lines.push('=== ' + (i + 1) + ' === ' + s.title + ' (' + s.timeSlot + ')');
+          for (let j = 0; j < s.sections.length; j++) {
+            const sec = s.sections[j];
+            lines.push('[' + sec.label + ']');
+            lines.push(sec.text && sec.text.trim() ? sec.text.trim() : '（請在此貼上 ' + sec.label + ' 歌詞）');
+            lines.push('');
+          }
+        }
+        const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'Post_Chorus_全部歌詞範本.txt';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('已下載《Post_Chorus_全部歌詞範本.txt》，填妥後可一鍵匯入！', 'success');
+      });
+
+      document.getElementById('importLyricsFileBtn').addEventListener('click', function () {
+        lyricsFileInput.click();
+      });
+
+      lyricsFileInput.addEventListener('change', function (e) {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function (ev) {
+          const content = String(ev.target.result || '');
+          if (file.name.toLowerCase().endsWith('.json')) {
+            try {
+              const parsed = JSON.parse(content);
+              if (Array.isArray(parsed) && parsed.length === DEFAULT_SONGS.length) {
+                songsData = parsed;
+                saveSongsToStorage();
+                renderSongTabs();
+                renderActiveSongLyrics();
+                if (!teleprompterOverlay.classList.contains('hidden')) renderTeleprompter();
+                showToast('已成功從 JSON 備份還原全部 6 首歌曲歌詞！', 'success');
+              } else {
+                showToast('JSON 格式不符，請確認為本控制台匯出的備份檔', 'error');
+              }
+            } catch (err) {
+              showToast('無法解析 JSON 檔案，請檢查檔案內容', 'error');
+            }
+          } else {
+            const count = parseAndApplyBatchText(content);
+            if (count > 0) {
+              showToast('已成功從文字檔匯入並更新 ' + count + ' 首歌曲歌詞！', 'success');
+            } else {
+              showToast('未在文字檔偵測到 === 1 === 至 === 6 === 標記，建議先下載範本檔格式填寫', 'warn');
+            }
+          }
+          lyricsFileInput.value = '';
+        };
+        reader.readAsText(file, 'UTF-8');
+      });
+
+      function closeBatchModal() {
+        batchImportModal.classList.add('hidden');
+        batchImportModal.classList.remove('flex');
+      }
+
+      document.getElementById('openBatchImportBtn').addEventListener('click', function () {
+        batchImportModal.classList.remove('hidden');
+        batchImportModal.classList.add('flex');
+      });
+      document.getElementById('closeBatchModalBtn').addEventListener('click', closeBatchModal);
+      document.getElementById('cancelBatchModalBtn').addEventListener('click', closeBatchModal);
+
+      document.getElementById('applyBatchImportBtn').addEventListener('click', function () {
+        const raw = batchAllLyricsTextarea.value.trim();
+        if (!raw) {
+          showToast('請先貼上歌詞內容再按匯入', 'warn');
+          return;
+        }
+
+        const updatedCount = parseAndApplyBatchText(raw);
+        if (updatedCount === 0) {
+          showToast('未偵測到 === 1 === 至 === 6 === 分隔標記，請依範例格式分隔歌曲', 'warn');
+          return;
+        }
+
+        closeBatchModal();
+        showToast('已成功批量更新 ' + updatedCount + ' 首歌曲的段落歌詞！', 'success');
+      });
+
+      // Teleprompter Events
+      document.getElementById('openTeleprompterBtn').addEventListener('click', openTeleprompter);
+      closeTeleprompterBtn.addEventListener('click', closeTeleprompter);
+
+      tpFontDownBtn.addEventListener('click', function () {
+        teleprompterFontScale = Math.max(60, teleprompterFontScale - 10);
+        renderTeleprompter();
+      });
+
+      tpFontUpBtn.addEventListener('click', function () {
+        teleprompterFontScale = Math.min(180, teleprompterFontScale + 10);
+        renderTeleprompter();
+      });
+
+      tpPrevSectionBtn.addEventListener('click', function () {
+        if (activeTeleprompterSectionIndex > 0) {
+          activeTeleprompterSectionIndex--;
+          renderTeleprompter();
+        }
+      });
+
+      tpNextSectionBtn.addEventListener('click', function () {
+        const song = getActiveSong();
+        if (song && activeTeleprompterSectionIndex < song.sections.length - 1) {
+          activeTeleprompterSectionIndex++;
+          renderTeleprompter();
+        }
+      });
+
+      tpPrevSongBtn.addEventListener('click', function () {
+        let idx = 0;
+        for (let i = 0; i < songsData.length; i++) {
+          if (songsData[i].id === activeSongId) idx = i;
+        }
+        const prevIdx = (idx - 1 + songsData.length) % songsData.length;
+        activeSongId = songsData[prevIdx].id;
+        activeTeleprompterSectionIndex = 0;
+        renderSongTabs();
+        renderActiveSongLyrics();
+        renderTeleprompter();
+      });
+
+      tpNextSongBtn.addEventListener('click', function () {
+        let idx = 0;
+        for (let i = 0; i < songsData.length; i++) {
+          if (songsData[i].id === activeSongId) idx = i;
+        }
+        const nextIdx = (idx + 1) % songsData.length;
+        activeSongId = songsData[nextIdx].id;
+        activeTeleprompterSectionIndex = 0;
+        renderSongTabs();
+        renderActiveSongLyrics();
+        renderTeleprompter();
+      });
+
+      tpFullscreenBtn.addEventListener('click', function () {
+        if (!document.fullscreenElement) {
+          teleprompterOverlay.requestFullscreen().catch(function () {
+            showToast('此視窗環境不支援系統全螢幕，已使用視窗滿版投影', 'info');
+          });
+        } else {
+          document.exitFullscreen().catch(function () {});
+        }
+      });
+
+      // Keyboard Shortcuts in Teleprompter Mode
+      document.addEventListener('keydown', function (e) {
+        if (teleprompterOverlay.classList.contains('hidden')) return;
+        if (e.key === 'Escape') {
+          closeTeleprompter();
+        } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+          e.preventDefault();
+          tpNextSectionBtn.click();
+        } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+          e.preventDefault();
+          tpPrevSectionBtn.click();
+        }
+      });
+
+      // Font Theme Buttons
+      const fontBtns = document.querySelectorAll('.font-theme-btn');
+      for (let i = 0; i < fontBtns.length; i++) {
+        fontBtns[i].addEventListener('click', function () {
+          applyFontTheme(this.getAttribute('data-font-btn'), true);
+        });
+      }
+
+      // High-frequency real-time clock, audio timecode & VU meter loop
+      setInterval(function () {
+        updateWallClockAndSchedule();
+        updateTimeDisplay();
+        updateVuMeterAnimation();
+      }, 100);
+
+      // Boot Sequence
+      let savedFont = 'serif';
+      try {
+        savedFont = localStorage.getItem(FONT_THEME_KEY) || 'serif';
+      } catch (e) {}
+      applyFontTheme(savedFont, false);
+
+      updateWallClockAndSchedule();
+      probeDefaultTracks();
+      selectTrack(0, false);
+      renderRundownTimeline();
+      renderSongTabs();
+      renderActiveSongLyrics();
+    })();
+  </script>
+</body>
+</html>
