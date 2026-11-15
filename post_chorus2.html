@@ -1,0 +1,2517 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" class="dark" data-font-theme="serif">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Post Chorus 活動音樂播放及歌詞控制台</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Plus Jakarta Sans, Noto Serif TC, LXGW WenKai TC, Zen Maru Gothic & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700;800&family=LXGW+WenKai+TC:wght@400;700&family=Noto+Serif+TC:wght@500;700;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['var(--app-font-sans)', '"Plus Jakarta Sans"', '"Noto Serif TC"', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            obsidian: {
+              950: '#06080d',
+              900: '#0b0f19',
+              850: '#101624',
+              800: '#161f33',
+            },
+            champagne: {
+              300: '#f5deb3',
+              400: '#eab676',
+              500: '#d49a4a',
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    /* Curated Typography Themes */
+    :root,
+    [data-font-theme="serif"] {
+      --app-font-sans: "Plus Jakarta Sans", "Noto Serif TC", Georgia, serif;
+    }
+    [data-font-theme="wenkai"] {
+      --app-font-sans: "Plus Jakarta Sans", "LXGW WenKai TC", cursive, sans-serif;
+    }
+    [data-font-theme="maru"] {
+      --app-font-sans: "Plus Jakarta Sans", "Zen Maru Gothic", sans-serif;
+    }
+
+    body {
+      font-family: var(--app-font-sans);
+      background-color: #06080d;
+      background-image:
+        radial-gradient(circle at 12% 0%, rgba(212, 154, 74, 0.12), transparent 38%),
+        radial-gradient(circle at 88% 8%, rgba(56, 189, 248, 0.10), transparent 40%),
+        linear-gradient(180deg, #06080d 0%, #090d16 100%);
+      color: #f1f5f9;
+      min-height: 100vh;
+    }
+
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Frosted Obsidian Studio Panel */
+    .studio-panel {
+      background: linear-gradient(180deg, rgba(20, 27, 45, 0.86) 0%, rgba(12, 17, 29, 0.94) 100%);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      box-shadow:
+        0 20px 45px -15px rgba(0, 0, 0, 0.65),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+    }
+
+    /* Recessed Hardware Display Well */
+    .studio-recessed {
+      background: rgba(6, 9, 16, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.65);
+    }
+
+    /* Tactile Console Buttons */
+    .console-btn {
+      transition: transform 0.12s ease, box-shadow 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 4px 12px rgba(0, 0, 0, 0.35);
+    }
+    .console-btn:hover {
+      transform: translateY(-1px);
+    }
+    .console-btn:active {
+      transform: translateY(1px) scale(0.985);
+    }
+
+    /* Custom Range Slider */
+    input[type="range"].studio-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      background: rgba(30, 41, 59, 0.9);
+      height: 8px;
+      border-radius: 999px;
+      outline: none;
+    }
+    input[type="range"].studio-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #f5deb3 0%, #d49a4a 100%);
+      border: 2px solid #0b0f19;
+      box-shadow: 0 0 12px rgba(234, 182, 118, 0.65);
+      cursor: pointer;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.4);
+      border-radius: 999px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.25);
+      border-radius: 999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(234, 182, 118, 0.45);
+    }
+
+    /* Upgraded Unified Stage Lyric Sheet Styling */
+    .lyric-stage-viewport {
+      background:
+        radial-gradient(ellipse at 50% 0%, rgba(234, 182, 118, 0.08) 0%, transparent 60%),
+        radial-gradient(ellipse at 50% 100%, rgba(56, 189, 248, 0.06) 0%, transparent 60%),
+        rgba(6, 9, 16, 0.72);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: inset 0 2px 16px rgba(0, 0, 0, 0.55);
+    }
+
+    .lyric-block {
+      transition: background-color 0.25s ease, border-color 0.25s ease, opacity 0.25s ease;
+    }
+
+    .lyric-block-focused-verse {
+      background: linear-gradient(90deg, rgba(14, 116, 144, 0.20) 0%, rgba(15, 23, 42, 0.55) 100%);
+      border-left: 3px solid #38bdf8;
+    }
+
+    .lyric-block-focused-chorus {
+      background: linear-gradient(90deg, rgba(217, 119, 6, 0.20) 0%, rgba(15, 23, 42, 0.55) 100%);
+      border-left: 3px solid #fbbf24;
+    }
+
+    .lyric-block-focused-bridge {
+      background: linear-gradient(90deg, rgba(126, 34, 206, 0.20) 0%, rgba(15, 23, 42, 0.55) 100%);
+      border-left: 3px solid #c084fc;
+    }
+
+    .lyric-line {
+      transition: color 0.2s ease;
+    }
+    .lyric-line:hover {
+      color: #ffffff;
+    }
+  </style>
+</head>
+<body class="antialiased selection:bg-amber-400/30 selection:text-amber-200">
+
+  <!-- Hidden Audio Element -->
+  <audio id="mainAudioPlayer" preload="auto" crossorigin="anonymous"></audio>
+
+  <!-- Hidden Local File Input for Loading MP3 Files Directly -->
+  <input id="localMp3Input" type="file" accept="audio/mp3,audio/mpeg,audio/*" multiple class="hidden" />
+  <input id="customPlaylistInput" type="file" accept="audio/mp3,audio/mpeg,audio/*" multiple class="hidden" />
+  <input id="replaceTrack0Input" type="file" accept="audio/mp3,audio/mpeg,audio/*" class="hidden" />
+  <input id="replaceTrack1Input" type="file" accept="audio/mp3,audio/mpeg,audio/*" class="hidden" />
+
+  <!-- Top Broadcast Navigation & Real-Time Clock Bar -->
+  <header class="sticky top-0 z-30 border-b border-white/10 bg-[#070a12]/90 backdrop-blur-xl">
+    <div class="max-w-[1480px] mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
+      <!-- Brand Identity -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-300 via-amber-500 to-amber-700 p-[1px] shadow-lg shadow-amber-500/20">
+          <div class="w-full h-full rounded-[11px] bg-[#0b0f19] flex items-center justify-center">
+            <svg class="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+            </svg>
+          </div>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base sm:text-lg font-extrabold tracking-wide text-white">POST CHORUS</h1>
+            <span class="px-2 py-0.5 text-[10px] font-mono uppercase tracking-widest rounded-full bg-amber-400/15 text-amber-300 border border-amber-400/30">STAGE AUDIO &amp; LYRICS</span>
+          </div>
+          <p class="text-xs text-slate-400">成音播放控制 · 流程時間軸 · 演出提詞板</p>
+        </div>
+      </div>
+      <!-- Right Controls: Stage Lock + Font Switcher + Live Rundown Phase + Master Wall Clock -->
+      <div class="flex items-center gap-2.5 sm:gap-3.5 ml-auto flex-wrap justify-end">
+        <!-- Stage Safety Lock Toggle -->
+        <button id="stageLockBtn" type="button" class="console-btn px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-white/15 text-xs font-bold text-slate-300 flex items-center gap-1.5" title="演出進行中可鎖定「停止歸零」與「切換音軌」，防止誤觸中斷音樂">
+          <span id="stageLockIcon">🔓</span>
+          <span id="stageLockLabel">防誤觸: 關</span>
+        </button>
+
+        <!-- Curated Font Theme Switcher -->
+        <div class="studio-recessed rounded-xl p-1 flex items-center gap-1" title="切換控制台及歌詞顯示字體">
+          <span class="text-[10px] font-mono text-slate-400 px-1.5 hidden sm:inline">字體</span>
+          <button type="button" data-font-btn="serif" class="font-theme-btn px-2.5 py-1 rounded-lg text-xs font-bold transition bg-amber-400 text-slate-950">典雅宋體</button>
+          <button type="button" data-font-btn="wenkai" class="font-theme-btn px-2.5 py-1 rounded-lg text-xs font-semibold transition text-slate-300 hover:text-white">溫潤文楷</button>
+          <button type="button" data-font-btn="maru" class="font-theme-btn px-2.5 py-1 rounded-lg text-xs font-semibold transition text-slate-300 hover:text-white">現代圓體</button>
+        </div>
+
+        <!-- Live Rundown Status Pill -->
+        <div class="hidden md:flex flex-col items-end studio-recessed rounded-xl px-3.5 py-1.5">
+          <span class="text-[10px] font-mono uppercase tracking-wider text-slate-400">目前時段對應流程</span>
+          <span id="livePhaseText" class="text-xs font-bold text-amber-300 truncate max-w-[230px]">待機中（活動時間 15:35–17:10）</span>
+        </div>
+
+        <!-- Digital Master Wall Clock -->
+        <div class="studio-recessed rounded-xl px-3.5 py-1.5 flex items-center gap-2.5 border-amber-400/20">
+          <span class="relative flex h-2.5 w-2.5">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400"></span>
+          </span>
+          <div>
+            <div class="text-[9px] font-mono uppercase tracking-widest text-slate-400 leading-none mb-0.5">LIVE CLOCK</div>
+            <div id="masterWallClock" class="font-mono text-base sm:text-lg font-bold text-white tabular-nums leading-none">00:00:00</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Responsive Console Workspace -->
+  <main class="max-w-[1480px] mx-auto px-4 sm:px-6 py-5 grid grid-cols-1 xl:grid-cols-12 gap-5">
+
+    <!-- LEFT COLUMN (5 cols on xl): Dual-Track Audio Deck + Rundown Timeline -->
+    <div class="xl:col-span-5 flex flex-col gap-5">
+
+      <!-- 1. DUAL-TRACK AUDIO CONSOLE -->
+      <section class="studio-panel rounded-2xl p-5 flex flex-col gap-4">
+        <!-- Deck Header & Local MP3 Loader -->
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-5 rounded-full bg-gradient-to-b from-amber-300 to-amber-600"></span>
+            <h2 class="text-base font-bold text-white tracking-wide">雙曲成音播放器</h2>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="loadLocalFilesBtn" type="button" class="console-btn px-3 py-1.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-xs font-semibold text-amber-300 border border-amber-400/30 flex items-center gap-1.5" title="若瀏覽器無法自動讀取同資料夾 MP3，請點此選取本機檔案">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+              </svg>
+              <span>載入本機 MP3</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Three Track Selector Cards (2 Built-in with Emergency Replace + 1 Custom Upload Playlist) -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+          <!-- Track 0: 主你知道.mp3 -->
+          <div id="trackCard0" role="button" tabindex="0" class="track-select-card cursor-pointer text-left p-3 rounded-xl border transition-all bg-amber-400/15 border-amber-400/60 shadow-lg shadow-amber-500/10 flex flex-col justify-between gap-2">
+            <div>
+              <div class="flex items-center justify-between gap-1 mb-1">
+                <span class="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-amber-400/20 text-amber-300 font-bold">TRACK 01</span>
+                <span id="trackStatus0" class="text-[10px] font-mono text-emerald-400">READY</span>
+              </div>
+              <div id="trackTitle0" class="font-bold text-sm text-white truncate">主你知道.mp3</div>
+              <div class="text-[11px] text-slate-400 mt-0.5 truncate">15:40 頭40秒 · 15:50 0:30起</div>
+            </div>
+            <div class="pt-1.5 border-t border-white/10 flex items-center gap-1">
+              <button id="replaceTrack0Btn" type="button" class="flex-1 py-1 px-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/35 border border-amber-400/40 text-[10px] font-bold text-amber-200 transition truncate" title="突發情況：上載本機 MP3 替代第 1 首預設音檔（保留 15:40 / 15:50 快捷鍵連動）">
+                📂 突發替代 MP3
+              </button>
+              <button id="resetTrack0Btn" type="button" class="hidden py-1 px-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-white/15 text-[10px] font-semibold text-slate-300 transition" title="還原為預設《主你知道.mp3》">
+                ↺
+              </button>
+            </div>
+          </div>
+
+          <!-- Track 1: 來自天上的信.mp3 -->
+          <div id="trackCard1" role="button" tabindex="0" class="track-select-card cursor-pointer text-left p-3 rounded-xl border transition-all bg-slate-900/60 border-white/10 hover:border-white/25 flex flex-col justify-between gap-2">
+            <div>
+              <div class="flex items-center justify-between gap-1 mb-1">
+                <span class="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-sky-400/20 text-sky-300 font-bold">TRACK 02</span>
+                <span id="trackStatus1" class="text-[10px] font-mono text-emerald-400">READY</span>
+              </div>
+              <div id="trackTitle1" class="font-bold text-sm text-white truncate">來自天上的信.mp3</div>
+              <div class="text-[11px] text-slate-400 mt-0.5 truncate">17:10 延伸活動背景播放</div>
+            </div>
+            <div class="pt-1.5 border-t border-white/10 flex items-center gap-1">
+              <button id="replaceTrack1Btn" type="button" class="flex-1 py-1 px-1.5 rounded-lg bg-sky-500/20 hover:bg-sky-500/35 border border-sky-400/40 text-[10px] font-bold text-sky-200 transition truncate" title="突發情況：上載本機 MP3 替代第 2 首預設音檔（保留 17:10 快捷鍵連動）">
+                📂 突發替代 MP3
+              </button>
+              <button id="resetTrack1Btn" type="button" class="hidden py-1 px-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-white/15 text-[10px] font-semibold text-slate-300 transition" title="還原為預設《來自天上的信.mp3》">
+                ↺
+              </button>
+            </div>
+          </div>
+
+          <!-- Track 2: 自定義上載播放清單 -->
+          <button id="trackCard2" type="button" class="track-select-card text-left p-3 rounded-xl border transition-all bg-slate-900/60 border-white/10 hover:border-white/25">
+            <div class="flex items-center justify-between gap-1 mb-1">
+              <span class="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-purple-400/20 text-purple-300 font-bold">PLAYLIST 03</span>
+              <span id="trackStatus2" class="text-[10px] font-mono text-slate-400">0 首</span>
+            </div>
+            <div id="trackCard2Title" class="font-bold text-sm text-white truncate">自定義音樂清單</div>
+            <div class="text-[11px] text-slate-400 mt-0.5 truncate">支援多首 MP3 上載與連播</div>
+          </button>
+        </div>
+
+        <!-- Custom Upload MP3 Playlist Drawer (Always accessible right next to/under the tracks) -->
+        <div id="customPlaylistPanel" class="rounded-xl bg-slate-950/75 border border-purple-400/30 p-3 flex flex-col gap-2.5">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-purple-400"></span>
+              <span class="text-xs font-extrabold text-purple-200">自定義上載 MP3 播放清單</span>
+              <span id="customPlaylistCountBadge" class="px-1.5 py-0.5 rounded bg-purple-500/20 border border-purple-400/30 text-[10px] font-mono text-purple-300">0 首曲目</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <button id="customAutoNextToggleBtn" type="button" class="px-2 py-1 rounded-lg bg-purple-500/20 border border-purple-400/40 text-[11px] font-bold text-purple-200 transition" title="播完一首自動接續播放清單下一首">
+                ⏭ 自動連播: ON
+              </button>
+              <button id="addCustomPlaylistBtn" type="button" class="console-btn px-2.5 py-1 rounded-lg bg-purple-500 hover:bg-purple-400 text-slate-950 text-[11px] font-extrabold flex items-center gap-1">
+                <span>＋ 上載 MP3</span>
+              </button>
+              <button id="clearCustomPlaylistBtn" type="button" class="hidden px-2 py-1 rounded-lg bg-slate-800 hover:bg-rose-500/25 border border-white/10 hover:border-rose-400/40 text-[11px] font-semibold text-slate-300 hover:text-rose-200 transition" title="清空自定義播放清單">
+                清空
+              </button>
+            </div>
+          </div>
+
+          <div id="customPlaylistItemsContainer" class="max-h-36 overflow-y-auto flex flex-col gap-1.5 pr-1">
+            <div id="customPlaylistEmptyHint" class="py-3 px-3 rounded-lg border border-dashed border-white/15 text-center text-xs text-slate-400 flex flex-col items-center gap-1.5">
+              <span>尚未加入自定義 MP3（可一次多選本機 MP3 檔案加入清單）</span>
+              <button type="button" id="emptyUploadTriggerBtn" class="px-3 py-1 rounded-lg bg-purple-500/20 hover:bg-purple-500/30 border border-purple-400/40 text-purple-200 font-bold text-[11px] transition">
+                📂 立即選擇 MP3 加入清單
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- One-Click Switch Track Button -->
+        <button id="switchTrackBtn" type="button" class="console-btn w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-slate-800 via-slate-800/95 to-slate-800 hover:from-amber-500/20 hover:to-sky-500/20 border border-white/15 hover:border-amber-400/40 text-xs sm:text-sm font-bold text-amber-200 flex items-center justify-center gap-2">
+          <svg class="w-4 h-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+          </svg>
+          <span>⇄ 輪流切換播放來源（目前：<span id="currentTrackBadgeName" class="underline decoration-amber-400/70">主你知道.mp3</span>）</span>
+        </button>
+
+        <!-- OLED Telemetry Display & Real-Time Timecode -->
+        <div class="studio-recessed rounded-2xl p-4 flex flex-col gap-3">
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <div class="flex items-center gap-2">
+                <span id="playbackStatePill" class="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider bg-slate-800 text-slate-300">STOPPED</span>
+                <span id="autoFadeCountdownBadge" class="hidden px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-rose-500/20 text-rose-300 border border-rose-400/40 animate-pulse">
+                  距離自動淡出：40.0s
+                </span>
+              </div>
+              <div id="oledTrackTitle" class="text-lg sm:text-xl font-extrabold text-white truncate mt-1.5">主你知道.mp3</div>
+            </div>
+
+            <!-- Live Output Level Meter Bars -->
+            <div class="flex flex-col items-end shrink-0">
+              <span class="text-[10px] font-mono text-slate-400 mb-1">OUTPUT GAIN: <span id="gainPercentText" class="text-amber-300 font-bold">100%</span></span>
+              <div id="vuMeterBars" class="flex items-end gap-1 h-7 px-2 py-1 rounded-lg bg-black/50 border border-white/5">
+                <span class="vu-bar w-1.5 h-1.5 rounded-sm bg-emerald-400 transition-all duration-75"></span>
+                <span class="vu-bar w-1.5 h-2 rounded-sm bg-emerald-400 transition-all duration-75"></span>
+                <span class="vu-bar w-1.5 h-3 rounded-sm bg-emerald-400 transition-all duration-75"></span>
+                <span class="vu-bar w-1.5 h-4 rounded-sm bg-emerald-400 transition-all duration-75"></span>
+                <span class="vu-bar w-1.5 h-5 rounded-sm bg-amber-400 transition-all duration-75"></span>
+                <span class="vu-bar w-1.5 h-5 rounded-sm bg-amber-400 transition-all duration-75"></span>
+                <span class="vu-bar w-1.5 h-6 rounded-sm bg-rose-400 transition-all duration-75"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Real-Time Elapsed & Remaining Timecode -->
+          <div class="flex items-baseline justify-between gap-2 pt-1">
+            <div>
+              <span class="text-[10px] font-mono uppercase tracking-wider text-slate-500 block">ELAPSED (實時時間)</span>
+              <span id="elapsedTimeDisplay" class="font-mono text-2xl sm:text-3xl font-bold text-amber-300 tabular-nums tracking-tight">00:00.0</span>
+            </div>
+            <div class="text-right">
+              <span class="text-[10px] font-mono uppercase tracking-wider text-slate-500 block">REMAINING / TOTAL</span>
+              <span class="font-mono text-sm sm:text-base font-bold text-slate-300 tabular-nums">
+                -<span id="remainingTimeDisplay">00:00</span> <span class="text-slate-500">/</span> <span id="totalDurationDisplay">00:00</span>
+              </span>
+            </div>
+          </div>
+
+          <!-- Seekable Progress Bar with 0:30 & 0:40 Cue Markers -->
+          <div class="flex flex-col gap-1.5">
+            <input id="seekSlider" type="range" min="0" max="1000" value="0" class="studio-slider w-full" aria-label="播放進度條" />
+            <div class="flex items-center justify-between text-[10px] font-mono text-slate-400">
+              <span>0:00</span>
+              <span class="text-sky-400">▲ 0:30 (15:50 淡入點)</span>
+              <span class="text-rose-400">▲ 0:40 (15:40 淡出點)</span>
+              <span id="endMarkerText">END</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Primary Transport Controls: Play, Pause, Stop, Loop -->
+        <div class="grid grid-cols-4 gap-2">
+          <button id="playDirectBtn" type="button" class="console-btn py-2.5 px-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs sm:text-sm flex flex-col items-center justify-center gap-0.5">
+            <span>▶ 播放</span>
+            <span class="text-[10px] font-mono opacity-80">PLAY</span>
+          </button>
+
+          <button id="pauseBtn" type="button" class="console-btn py-2.5 px-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs sm:text-sm border border-white/10 flex flex-col items-center justify-center gap-0.5">
+            <span>⏸ 暫停</span>
+            <span class="text-[10px] font-mono text-slate-400">PAUSE</span>
+          </button>
+
+          <button id="stopResetBtn" type="button" class="console-btn py-2.5 px-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs sm:text-sm border border-white/10 flex flex-col items-center justify-center gap-0.5">
+            <span>⏹ 停止歸零</span>
+            <span class="text-[10px] font-mono text-slate-400">STOP</span>
+          </button>
+
+          <button id="loopToggleBtn" type="button" class="console-btn py-2.5 px-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs sm:text-sm border border-white/10 flex flex-col items-center justify-center gap-0.5">
+            <span id="loopBtnLabel">🔁 Loop: OFF</span>
+            <span class="text-[10px] font-mono text-slate-400">單曲循環</span>
+          </button>
+        </div>
+
+        <!-- Master Volume Controller & MC Voice-Over Ducking -->
+        <div class="rounded-xl bg-slate-900/80 border border-white/10 p-3 flex flex-col gap-2.5">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <button id="muteToggleBtn" type="button" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-white/15 text-xs font-bold text-slate-200 flex items-center gap-1" title="一鍵靜音 / 恢復音量">
+                <span id="muteIcon">🔊</span>
+                <span id="muteLabel">音量</span>
+              </button>
+              <span id="masterVolValueText" class="font-mono text-sm font-extrabold text-amber-300 tabular-nums w-11">100%</span>
+            </div>
+
+            <!-- Quick Volume Presets & MC Voice-Over Ducking -->
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <button type="button" data-vol-preset="100" class="vol-preset-btn px-2 py-1 rounded-md bg-slate-800/90 hover:bg-slate-700 text-[11px] font-mono font-bold text-slate-300 border border-white/10">100%</button>
+              <button type="button" data-vol-preset="70" class="vol-preset-btn px-2 py-1 rounded-md bg-slate-800/90 hover:bg-slate-700 text-[11px] font-mono font-bold text-slate-300 border border-white/10">70%</button>
+              <button type="button" data-vol-preset="40" class="vol-preset-btn px-2 py-1 rounded-md bg-slate-800/90 hover:bg-slate-700 text-[11px] font-mono font-bold text-slate-300 border border-white/10">40%</button>
+              <button id="duckingToggleBtn" type="button" class="px-2.5 py-1 rounded-lg bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-400/45 text-indigo-200 text-[11px] font-bold flex items-center gap-1 transition" title="MC 或 Story Teller 讀信時平滑壓低音樂至 25%">
+                <span>🎙️ MC 講話壓低 (25%)</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Volume Fader Slider -->
+          <div class="flex items-center gap-3">
+            <span class="text-[10px] font-mono text-slate-500">0%</span>
+            <input id="masterVolumeSlider" type="range" min="0" max="100" value="100" class="studio-slider flex-1" aria-label="主輸出音量控制推桿" />
+            <span class="text-[10px] font-mono text-slate-500">MAX</span>
+          </div>
+        </div>
+
+        <!-- Smooth Fade-In / Fade-Out Controls & Duration Setting -->
+        <div class="rounded-xl bg-slate-900/70 border border-white/10 p-3 flex flex-col gap-2.5">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-xs font-bold text-slate-200">平滑淡入 / 淡出控制 (Smooth Fade)</span>
+            <label class="flex items-center gap-1.5 text-xs text-slate-300">
+              <span>淡變時長:</span>
+              <select id="fadeDurationSelect" class="bg-slate-950 border border-white/15 rounded-lg px-2 py-1 text-xs font-mono text-amber-300 focus:outline-none focus:border-amber-400">
+                <option value="2">2.0 秒</option>
+                <option value="3.5" selected>3.5 秒</option>
+                <option value="5">5.0 秒</option>
+                <option value="7">7.0 秒</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2.5">
+            <button id="fadeInBtn" type="button" class="console-btn py-2.5 px-3 rounded-xl bg-gradient-to-r from-sky-500/25 to-cyan-500/20 hover:from-sky-500/35 hover:to-cyan-500/30 border border-sky-400/40 text-sky-200 font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5">
+              <span>📈 淡入播放 (Fade In)</span>
+            </button>
+
+            <button id="fadeOutBtn" type="button" class="console-btn py-2.5 px-3 rounded-xl bg-gradient-to-r from-rose-500/25 to-orange-500/20 hover:from-rose-500/35 hover:to-orange-500/30 border border-rose-400/40 text-rose-200 font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5">
+              <span>📉 淡出停止 (Fade Out)</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Three Rundown Macro Shortcut Buttons (15:40, 15:50 & 17:10) -->
+        <div class="rounded-xl bg-gradient-to-br from-amber-500/10 via-slate-900/80 to-sky-500/10 border border-amber-400/30 p-3 flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-mono uppercase tracking-wider text-amber-300 font-bold">⚡ 流程快捷鍵 (RUNDOWN MACROS)</span>
+            <span class="text-[11px] text-slate-400">一鍵執行指定時段音樂 Cue</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <!-- Shortcut 1: Play 40s then Fade Out -->
+            <button id="macro40sFadeOutBtn" type="button" class="console-btn text-left p-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/50 transition flex flex-col justify-between gap-1">
+              <div class="flex items-center justify-between gap-1">
+                <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-amber-400 text-slate-950">15:40</span>
+                <span class="text-[10px] font-mono text-amber-200">0:00→0:40</span>
+              </div>
+              <div class="text-xs font-extrabold text-white mt-0.5">播 40 秒後淡出</div>
+              <div class="text-[10px] text-amber-200/80 leading-snug">《主你知道》滿40秒自動 Fade Out</div>
+            </button>
+
+            <!-- Shortcut 2: Start at 0:30 with Fade In -->
+            <button id="macro30sFadeInBtn" type="button" class="console-btn text-left p-2.5 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 border border-sky-400/50 transition flex flex-col justify-between gap-1">
+              <div class="flex items-center justify-between gap-1">
+                <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-sky-400 text-slate-950">15:50</span>
+                <span class="text-[10px] font-mono text-sky-200">0:30 起</span>
+              </div>
+              <div class="text-xs font-extrabold text-white mt-0.5">30 秒開始淡入</div>
+              <div class="text-[10px] text-sky-200/80 leading-snug">跳 0:30 淡入並切 V1→C→V2→C</div>
+            </button>
+
+            <!-- Shortcut 3: 17:10 Play 來自天上的信.mp3 -->
+            <button id="macro1710LetterBtn" type="button" class="console-btn text-left p-2.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/50 transition flex flex-col justify-between gap-1">
+              <div class="flex items-center justify-between gap-1">
+                <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-400 text-slate-950">17:10</span>
+                <span class="text-[10px] font-mono text-emerald-200">延伸活動</span>
+              </div>
+              <div class="text-xs font-extrabold text-white mt-0.5">淡入《來自天上的信》</div>
+              <div class="text-[10px] text-emerald-200/80 leading-snug">切至第2首淡入並同步顯示歌詞</div>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. POST CHORUS RUNDOWN TIMELINE (Display Only - No Check-off Required) -->
+      <section class="studio-panel rounded-2xl p-5 flex flex-col gap-3">
+        <div class="flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-5 rounded-full bg-gradient-to-b from-sky-300 to-indigo-500"></span>
+            <div>
+              <h2 class="text-base font-bold text-white tracking-wide">Post Chorus 流程時間軸 (Timeline)</h2>
+              <p class="text-[11px] text-slate-400">垂直時間軸檢視（無需勾選確認 · 點擊 💻 電腦 Cue 可快速聯動）</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button id="scrollToLiveCueBtn" type="button" class="px-2.5 py-1 rounded-lg bg-amber-400/15 hover:bg-amber-400/25 border border-amber-400/35 text-[11px] font-bold text-amber-300 transition" title="自動捲動至目前現場時段">🎯 目前時段</button>
+            <span class="px-2.5 py-1 rounded-lg bg-slate-900/90 border border-white/10 text-[11px] font-mono text-slate-300">15:35 – 17:10</span>
+          </div>
+        </div>
+
+        <div id="rundownTimelineContainer" class="max-h-[450px] overflow-y-auto pr-1.5 pt-1 pb-2">
+          <!-- Populated dynamically as a vertical timeline by JS -->
+        </div>
+      </section>
+    </div>
+
+    <!-- RIGHT COLUMN (7 cols on xl): All 6 Performance Songs Lyrics -->
+    <div class="xl:col-span-7 flex flex-col gap-5">
+      <section class="studio-panel rounded-2xl p-5 flex flex-col gap-4 h-full">
+        <!-- Lyrics Section Header (Read-Only Stage Display) -->
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-2.5">
+            <span class="w-2 h-6 rounded-full bg-gradient-to-b from-amber-300 via-amber-500 to-rose-400"></span>
+            <div>
+              <h2 class="text-base sm:text-lg font-extrabold text-white tracking-wide">演出歌詞舞台提詞板（Verse / Chorus）</h2>
+              <p class="text-xs text-slate-400">一體化連貫歌詞排版 · 點擊任意段落可高亮聚焦「正在演唱」</p>
+            </div>
+          </div>
+          <span class="px-2.5 py-1 rounded-lg bg-slate-900/90 border border-white/10 text-[11px] font-mono text-slate-400">6 首表演曲目</span>
+        </div>
+
+        <!-- 6 Performance Song Selector Tabs -->
+        <div id="songTabsContainer" class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+          <!-- Populated dynamically by JS -->
+        </div>
+
+        <!-- Active Song Editorial Hero Banner -->
+        <div id="activeSongBanner" class="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/95 via-[#0d1424] to-slate-950 p-4 sm:p-5 flex flex-col gap-3 shadow-xl">
+          <!-- Populated dynamically by JS -->
+        </div>
+
+        <!-- Lyric Display Control Bar (Font Scale, Alignment & Section Stepper) -->
+        <div class="flex flex-wrap items-center justify-between gap-2 px-3 py-2 rounded-xl studio-recessed">
+          <div class="flex items-center gap-1.5">
+            <span class="text-[11px] font-mono text-slate-400 mr-1">段落導航</span>
+            <button id="prevLyricSecBtn" type="button" class="px-2.5 py-1 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-xs font-bold text-slate-200 border border-white/10 transition">↑ 上一段</button>
+            <button id="nextLyricSecBtn" type="button" class="px-2.5 py-1 rounded-lg bg-amber-400/20 hover:bg-amber-400/30 text-xs font-bold text-amber-200 border border-amber-400/35 transition">↓ 下一段</button>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <!-- Alignment Toggle -->
+            <div class="flex items-center rounded-lg bg-slate-950/90 border border-white/10 p-0.5">
+              <button id="alignCenterBtn" type="button" class="px-2.5 py-1 rounded-md text-[11px] font-bold bg-amber-400 text-slate-950 transition">置中舞台</button>
+              <button id="alignLeftBtn" type="button" class="px-2.5 py-1 rounded-md text-[11px] font-semibold text-slate-400 hover:text-white transition">靠左閱讀</button>
+            </div>
+
+            <!-- Font Size Zoom -->
+            <div class="flex items-center rounded-lg bg-slate-950/90 border border-white/10 p-0.5">
+              <button id="lyricFontDownBtn" type="button" class="px-2 py-1 rounded-md text-xs font-bold text-slate-300 hover:bg-slate-800" title="縮小歌詞字體">A-</button>
+              <span id="lyricFontScaleLabel" class="px-2 text-[11px] font-mono text-amber-300 tabular-nums">100%</span>
+              <button id="lyricFontUpBtn" type="button" class="px-2 py-1 rounded-md text-xs font-bold text-slate-300 hover:bg-slate-800" title="放大歌詞字體">A+</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Active Song Verse / Chorus Unified Stage Viewport -->
+        <div id="lyricsSectionsContainer" class="lyric-stage-viewport rounded-2xl p-2 sm:p-3 flex-1 flex flex-col divide-y divide-white/[0.06] overflow-y-auto max-h-[660px]">
+          <!-- Populated dynamically by JS -->
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Non-Intrusive Toast Notification Banner -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none max-w-sm"></div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // =========================================================================
+      // 1. AUDIO TRACKS & POST CHORUS RUNDOWN TIMELINE DATA
+      // =========================================================================
+      const AUDIO_TRACKS = [
+        {
+          id: 0,
+          defaultFileName: '主你知道.mp3',
+          fileName: '主你知道.mp3',
+          defaultSrc: './主你知道.mp3',
+          customUrl: null,
+          cueHint: '15:40 頭40秒 · 15:50 0:30起'
+        },
+        {
+          id: 1,
+          defaultFileName: '來自天上的信.mp3',
+          fileName: '來自天上的信.mp3',
+          defaultSrc: './來自天上的信.mp3',
+          customUrl: null,
+          cueHint: '17:10 延伸活動背景播放'
+        },
+        {
+          id: 2,
+          fileName: '自定義音樂清單（未上載）',
+          defaultSrc: '',
+          customUrl: null,
+          cueHint: '自定義上載 MP3 播放清單'
+        }
+      ];
+
+      // Custom Uploaded MP3 Playlist State
+      let customPlaylist = []; // Array of { id, name, url, durationText }
+      let customPlaylistActiveIndex = 0;
+      let isCustomPlaylistAutoNext = true;
+
+      const RUNDOWN_ITEMS = [
+        { time: '1535', displayTime: '15:35', content: 'sound check (mic, computer)', pic: 'MC、電腦', remark: 'PPT 用 extended mode', isComputerCue: true, actionType: 'soundcheck' },
+        { time: '1540', displayTime: '15:40', content: '關掉所有燈光', pic: '燈光', remark: '', isComputerCue: false },
+        { time: '1540', displayTime: '15:40+', content: '讀“演出禮儀”', pic: 'MC', remark: '', isComputerCue: false },
+        { time: '1540', displayTime: '15:40+', content: '純音樂《主你知道》', pic: '電腦', remark: '只播頭 30~40 秒', isComputerCue: true, actionType: 'macro40s' },
+        { time: '1540', displayTime: '15:40+', content: 'MC 上台', pic: 'MC', remark: '', isComputerCue: false },
+        { time: '1545', displayTime: '15:45', content: '開台燈', pic: '燈光', remark: '', isComputerCue: false },
+        { time: '1545', displayTime: '15:45+', content: '結束純音樂', pic: '電腦', remark: 'Fade out', isComputerCue: true, actionType: 'fadeout' },
+        { time: '1545', displayTime: '15:45+', content: '引子', pic: 'MC', remark: '', isComputerCue: false },
+        { time: '1545', displayTime: '15:45+', content: '關台燈、MC 落台', pic: '燈光、MC', remark: '落台後 MC pass mic to ST1', isComputerCue: false },
+        { time: '1550', displayTime: '15:50', content: '純音樂《主你知道》(0:30 ~ 4:30) · Story Teller 1、busking team 上台', pic: '電腦、ST1 + busking', remark: '同時間 show 歌詞 V1 C V2 C', isComputerCue: true, actionType: 'macro30s' },
+        { time: '1550', displayTime: '15:50+', content: '開台燈', pic: '燈光', remark: '', isComputerCue: false },
+        { time: '1555', displayTime: '15:55', content: '信 1', pic: 'ST1', remark: '', isComputerCue: false },
+        { time: '1555', displayTime: '15:55+', content: 'ST1 落台', pic: 'ST1', remark: '落台後 ST1 pass mic to ST2', isComputerCue: false },
+        { time: '1600', displayTime: '16:00', content: '【當你走到無力】（原表誤植：當你感到無力）', pic: 'busking', remark: '顯示歌詞', isComputerCue: true, songId: 'song2' },
+        { time: '1610', displayTime: '16:10', content: 'Story Teller 2 上台 · 信 2', pic: 'ST2', remark: '', isComputerCue: false },
+        { time: '1615', displayTime: '16:15', content: 'Story Teller 2 落台 · 【神啊!你在哪兒?】', pic: 'ST2、busking', remark: '落台後 ST2 pass mic to ST3 · 顯示歌詞', isComputerCue: true, songId: 'song3' },
+        { time: '1625', displayTime: '16:25', content: 'Story Teller 3 上台 · 信 3 · Story Teller 3 落台', pic: 'ST3', remark: '落台後 ST3 pass mic to ST4', isComputerCue: false },
+        { time: '1630', displayTime: '16:30', content: '【愛叫我勇敢踏前】', pic: 'busking', remark: '顯示歌詞', isComputerCue: true, songId: 'song4' },
+        { time: '1640', displayTime: '16:40', content: 'Story Teller 4 上台 · 信 4 · Story Teller 4 落台', pic: 'ST4', remark: '落台後 ST4 pass mic to MC', isComputerCue: false },
+        { time: '1645', displayTime: '16:45', content: 'I Just Need to Glorify You (English Original)', pic: 'busking', remark: '顯示英文原版歌詞 · 之後關台燈、Vocal 落台、MC 上台', isComputerCue: true, songId: 'song5' },
+        { time: '1655', displayTime: '16:55', content: '開台燈 · 結束語', pic: '燈光、MC', remark: '', isComputerCue: false },
+        { time: '1700', displayTime: '17:00', content: '【主祢知道】', pic: 'busking', remark: '現場演唱 · 開所有燈光', isComputerCue: true, songId: 'song1' },
+        { time: '1710', displayTime: '17:10', content: '講解延伸活動（同學也可寫信寄給上帝）· 播《來自天上的信》', pic: 'MC、電腦', remark: '播《來自天上的信.mp3》並顯示歌詞', isComputerCue: true, actionType: 'playLetterSong' }
+      ];
+
+      // =========================================================================
+      // ★ 歌詞設定區：你可直接在此修改各首歌曲的 Verse / Chorus 歌詞 ★
+      // 使用反引號 `...` 包住多行歌詞，直接換行即可，儲存 HTML 後重新整理網頁即生效。
+      // =========================================================================
+      const DEFAULT_SONGS = [
+        {
+          id: 'song1',
+          number: '01',
+          timeSlot: '15:50 & 17:00',
+          title: '《主你知道》',
+          subtitle: 'HKACM 香港基督徒音樂事工協會 · 曲/詞：Ode Wong, Glory Cheung',
+          themeSummary: '訴說主耶穌深知人內心的軟弱、疲乏與渴慕，在迷途之中親自尋找並賜下勇氣走上新方向。',
+          searchQuery: '主祢知道 HKACM 歌詞',
+          structureSummary: '17:00 完整演唱',
+          openingCue: '15:50 純音樂 0:30 起同步顯示',
+          sections: [
+            {
+              label: 'Verse 1 (V1)',
+              type: 'verse',
+              cueNote: '15:50 純音樂 0:30 起同步顯示',
+              text: `軟弱主祢知道 疲乏主已知道
+更知道我渴慕 我心裡那愛慕
+這一切祢都知道`
+            },
+            {
+              label: 'Chorus 1 (C1)',
+              type: 'chorus',
+              cueNote: '第一段副歌',
+              text: `耶穌親自尋找我
+於加利利海邊 問我的心如何
+縱使我曾軟弱 你卻沒有捨棄
+願一生跟主 奉上給你`
+            },
+            {
+              label: 'Verse 2 (V2)',
+              type: 'verse',
+              cueNote: '第二段主歌',
+              text: `軟弱主會擁抱 疲乏主也鼓舞
+你安慰你引導 你寬恕你教導
+這一切我都知道`
+            },
+            {
+              label: 'Chorus 2 (C2)',
+              type: 'chorus',
+              cueNote: '第二段副歌',
+              text: `耶穌親自尋找我
+於加利利海邊 問我的心如何
+縱使我曾軟弱 祢卻沒有捨棄
+願一生跟主 奉上給祢`
+            },
+            {
+              label: 'Bridge (B)',
+              type: 'verse',
+              cueNote: '副歌',
+              text: `我不回首 向前走
+點起愛祢的火 永不放手
+祢應許不改變 必施恩看顧
+賜我勇氣走上 新的方向`
+            },
+            {
+              label: 'Chorus 3 (C3)',
+              type: 'chorus',
+              cueNote: '第三段副歌',
+              text: `耶穌親自尋找我
+於加利利海邊 問我的心如何
+縱使我曾軟弱 祢卻沒有捨棄
+願一生跟主`
+            },
+            {
+              label: 'Chorus 4 (C4)',
+              type: 'chorus',
+              cueNote: '第四段副歌',
+              text: `耶穌親自尋找我
+漆黑迷途之中 讓我再見真光
+縱使我曾軟弱 你卻沒有捨棄
+願一生跟主奉上給祢`
+            }
+          ]
+        },
+                {
+          id: 'song2',
+          number: '02',
+          timeSlot: '16:00',
+          title: '《當你走到無力》',
+          subtitle: 'Red Sea 原創粵語詩歌 · 曲/詞：唐瑛琦',
+          themeSummary: '安慰在人生路上感到孤單、空虛與疲乏的人，提醒只要相信並伸手接受，耶穌必擔當軟弱帶領展翅高飛。',
+          searchQuery: '當你走到無力 Red Sea 歌詞',
+          structureSummary: '/',
+          openingCue: '16:00 Busking ',
+          sections: [
+            {
+              label: 'Verse 1',
+              type: 'verse',
+              cueNote: '起唱主歌',
+              text: `當你走到無力繼續下去 當你感到寂寞困惱空虛，
+只要相信神隨時扶助你 願助你解開困惑拋開痛悲。`
+            },
+            {
+              label: 'Verse 2',
+              type: 'verse',
+              cueNote: '第二段主歌',
+              text: `當你跑到疲乏難再下去 當你感到疑惑說：「我是誰？」
+只要相信神完全明白你 就讓你伸手接受
+祂深愛你`
+            },
+            {
+              label: 'Chorus',
+              type: 'chorus',
+              cueNote: '副歌',
+              text: `別害怕 祂知你難受 擔當軟弱與困憂
+不需再懼怕 耶穌必拯救
+願你開口接受 張開你手
+別害怕 祂知你難受 擔當軟弱與困憂
+不需再懼怕 耶穌必拯救
+讓你一生快樂展翅高飛 一個全新的你`
+            }
+          ]
+        },
+        {
+          id: 'song3',
+          number: '03',
+          timeSlot: '16:15',
+          title: '《神啊！你在哪兒？》',
+          subtitle: '盧永亨作品 · 收錄於《團契遊樂園 5.1 還記得嗎》',
+          themeSummary: '從身處絕境與失意時的痛苦呼喊出發，轉化為對神同在與恩典的信靠，相信主手總會守在身旁。',
+          searchQuery: '神啊 你在哪兒 盧永亨 歌詞',
+          structureSummary: 'Verse 1 → Verse 2 → Chorus 1 → Chorus 2',
+          openingCue: '16:15 Busking 演出',
+          sections: [
+            {
+              label: 'Verse 1',
+              type: 'verse',
+              cueNote: '起唱主歌',
+              text: `我的天 為何總下著雨 
+遙望長空 神啊 你在哪兒
+如若這匆匆生命 真有豐盛意義
+何以要面對沉痛失意`
+            },
+            {
+              label: 'Verse 2',
+              type: 'verse',
+              cueNote: '第二段主歌',
+              text: `我的心 像迷失在絕處
+前路無光 神啊 你在哪兒
+難道這一生彷彿 只有不幸際遇
+神啊 你別要無言不語`
+            },
+            {
+              label: 'Chorus 1',
+              type: 'chorus',
+              cueNote: '副歌第一段',
+              text: `我沒法控制狂風的方向 也未能知曉
+那日方可重見艷陽
+但我知主的手 總會守在我旁
+前景雖灰暗信念未搖晃`
+            },
+            {
+              label: 'Chorus 2',
+              type: 'chorus',
+              cueNote: '副歌第二段',
+              text: `我沒法掌管潮水的升降 也未能阻擋遍地冰霜
+隨處跌盪
+但我知 主恩典
+足夠克服駭浪 無力的心可變堅壯`
+            }
+          ]
+        },
+        {
+          id: 'song4',
+          number: '04',
+          timeSlot: '16:30',
+          title: '《愛叫我勇敢踏前》',
+          subtitle: '同心圓 TWS 敬拜者使團',
+          themeSummary: '表達即使前路如曠野般充滿風浪，因著神的愛與話語如雲柱火柱般導航，便能得著勇氣無懼前行。',
+          searchQuery: '愛叫我勇敢踏前 同心圓 歌詞',
+          structureSummary: 'Verse → Chorus',
+          openingCue: '16:30 Busking 演出',
+          sections: [
+            {
+              label: 'Verse & Chorus',
+              type: 'verse',
+              cueNote: '起唱主歌與副歌',
+              text: `前望需要勇氣 等待時需盼望
+猶幸一生同行 是祢給我力量
+前路縱如曠野 主住我心
+縱天塌下來心不慌 聖靈內住我心高歌
+沿途有主劃破深海 止息狂風駭浪
+祢的愛叫我勇敢踏前 靠祢堅壯`
+            }
+          ]
+        },
+
+          
+
+        {
+          id: 'song5',
+          number: '05',
+          timeSlot: '16:45',
+          title: 'I Just Need to Glorify You',
+          subtitle: '曲/詞：柳慧敏 Wilma Liu ·《敬拜詩選─希伯崙堂短詩集》#33 (English Original)',
+          themeSummary: '回應神無條件的接納——主不要求我們先變得完美或領先，我們只需單純回應祂的愛，活出榮耀神的生命。',
+          searchQuery: 'I Just Need to Glorify You Wilma Liu lyrics',
+          structureSummary: 'Verse 1 → Chorus → Verse 2 → Chorus → Bridge / Outro',
+          openingCue: '16:45 Busking (English Original Version)',
+          sections: [
+            {
+              label: 'Verse 1',
+              type: 'verse',
+              cueNote: 'Opening English Verse 1',
+              text: `I don't need to be the best to be accepted.
+I don't need to be perfect to be accepted.`
+            },
+            {
+              label: 'Chorus',
+              type: 'chorus',
+              cueNote: 'Main English Chorus',
+              text: ``
+            },
+            {
+              label: 'Verse 2',
+              type: 'verse',
+              cueNote: 'English Verse 2',
+              text: ``
+            },
+            {
+              label: 'Chorus',
+              type: 'chorus',
+              cueNote: 'Repeat Main English Chorus',
+              text: ``
+            },
+            {
+              label: 'Bridge / Outro',
+              type: 'bridge',
+              cueNote: 'Ending worship tag',
+              text: ``
+            }
+          ]
+        },
+        {
+          id: 'song6',
+          number: '06',
+          timeSlot: '17:10',
+          title: '《來自天上的信》',
+          subtitle: '鹹蛋音樂事工 SEMM · 曲/詞：Glory Cheung（配合寫信寄給上帝延伸活動）',
+          themeSummary: '以天父第一身向孩子寫信的視角，溫柔回應人的害怕與孤單，宣告神早已看見眼淚並張開雙手擁抱等候。',
+          searchQuery: '來自天上的信 鹹蛋音樂 歌詞',
+          structureSummary: 'Verse → Chorus → Coda',
+          openingCue: '17:10 播放《來自天上的信.mp3》並顯示歌詞',
+          sections: [
+            {
+              label: 'Verse',
+              type: 'verse',
+              cueNote: '17:10 起唱主歌',
+              text: `你不需掙扎，可安躺於我手
+你知道嗎？你多麼寶貴，單單珍惜愛你`
+            },
+            {
+              label: 'Chorus',
+              type: 'chorus',
+              cueNote: '副歌',
+              text: ``
+            },
+            {
+              label: 'Coda',
+              type: 'bridge',
+              cueNote: '尾聲呼召（配合同學寫信環節）',
+              text: ``
+            }
+          ]
+        }
+      ];
+
+      const FONT_THEME_KEY = 'post_chorus_font_theme_v5';
+
+      // =========================================================================
+      // 2. STATE MANAGEMENT
+      // =========================================================================
+      let currentTrackIndex = 0;
+      let isLoopEnabled = false;
+      let fadeAnimationId = null;
+      let duckAnimationId = null;
+      let fortySecMonitorActive = false;
+      let fortySecTriggeredFade = false;
+      let isSeeking = false;
+
+      // Broadcast Gain Staging State:
+      // Effective output = isMuted ? 0 : masterVolume * fadeEnvelope * duckMultiplier
+      let masterVolume = 1.0;
+      let fadeEnvelope = 1.0;
+      let duckMultiplier = 1.0;
+      let isMuted = false;
+      let isDucked = false;
+      let isStageLocked = false;
+
+      // 直接讀取上方 DEFAULT_SONGS，方便你修改 HTML 後立即顯示最新歌詞
+      const songsData = DEFAULT_SONGS;
+      let activeSongId = 'song1';
+      let activeLyricSectionIndex = 0;
+      let lyricsFontScale = 100;
+      let lyricsAlignMode = 'center';
+      let lastRenderedMinute = -1;
+
+      // =========================================================================
+      // 3. DOM ELEMENT REFERENCES
+      // =========================================================================
+      const audioEl = document.getElementById('mainAudioPlayer');
+      const localMp3Input = document.getElementById('localMp3Input');
+      const loadLocalFilesBtn = document.getElementById('loadLocalFilesBtn');
+
+      const trackCard0 = document.getElementById('trackCard0');
+      const trackCard1 = document.getElementById('trackCard1');
+      const trackCard2 = document.getElementById('trackCard2');
+      const trackStatus0 = document.getElementById('trackStatus0');
+      const trackStatus1 = document.getElementById('trackStatus1');
+      const trackStatus2 = document.getElementById('trackStatus2');
+      const trackTitle0 = document.getElementById('trackTitle0');
+      const trackTitle1 = document.getElementById('trackTitle1');
+      const replaceTrack0Btn = document.getElementById('replaceTrack0Btn');
+      const replaceTrack1Btn = document.getElementById('replaceTrack1Btn');
+      const resetTrack0Btn = document.getElementById('resetTrack0Btn');
+      const resetTrack1Btn = document.getElementById('resetTrack1Btn');
+      const replaceTrack0Input = document.getElementById('replaceTrack0Input');
+      const replaceTrack1Input = document.getElementById('replaceTrack1Input');
+      const trackCard2Title = document.getElementById('trackCard2Title');
+      const customPlaylistInput = document.getElementById('customPlaylistInput');
+      const addCustomPlaylistBtn = document.getElementById('addCustomPlaylistBtn');
+      const clearCustomPlaylistBtn = document.getElementById('clearCustomPlaylistBtn');
+      const customAutoNextToggleBtn = document.getElementById('customAutoNextToggleBtn');
+      const customPlaylistCountBadge = document.getElementById('customPlaylistCountBadge');
+      const customPlaylistItemsContainer = document.getElementById('customPlaylistItemsContainer');
+      const switchTrackBtn = document.getElementById('switchTrackBtn');
+      const currentTrackBadgeName = document.getElementById('currentTrackBadgeName');
+
+      const playbackStatePill = document.getElementById('playbackStatePill');
+      const autoFadeCountdownBadge = document.getElementById('autoFadeCountdownBadge');
+      const oledTrackTitle = document.getElementById('oledTrackTitle');
+      const gainPercentText = document.getElementById('gainPercentText');
+      const vuBars = Array.from(document.querySelectorAll('.vu-bar'));
+
+      const elapsedTimeDisplay = document.getElementById('elapsedTimeDisplay');
+      const remainingTimeDisplay = document.getElementById('remainingTimeDisplay');
+      const totalDurationDisplay = document.getElementById('totalDurationDisplay');
+      const endMarkerText = document.getElementById('endMarkerText');
+      const seekSlider = document.getElementById('seekSlider');
+
+      const playDirectBtn = document.getElementById('playDirectBtn');
+      const pauseBtn = document.getElementById('pauseBtn');
+      const stopResetBtn = document.getElementById('stopResetBtn');
+      const loopToggleBtn = document.getElementById('loopToggleBtn');
+      const loopBtnLabel = document.getElementById('loopBtnLabel');
+
+      const fadeDurationSelect = document.getElementById('fadeDurationSelect');
+      const fadeInBtn = document.getElementById('fadeInBtn');
+      const fadeOutBtn = document.getElementById('fadeOutBtn');
+      const macro40sFadeOutBtn = document.getElementById('macro40sFadeOutBtn');
+      const macro30sFadeInBtn = document.getElementById('macro30sFadeInBtn');
+      const macro1710LetterBtn = document.getElementById('macro1710LetterBtn');
+
+      const masterVolumeSlider = document.getElementById('masterVolumeSlider');
+      const masterVolValueText = document.getElementById('masterVolValueText');
+      const muteToggleBtn = document.getElementById('muteToggleBtn');
+      const muteIcon = document.getElementById('muteIcon');
+      const muteLabel = document.getElementById('muteLabel');
+      const duckingToggleBtn = document.getElementById('duckingToggleBtn');
+      const stageLockBtn = document.getElementById('stageLockBtn');
+      const stageLockIcon = document.getElementById('stageLockIcon');
+      const stageLockLabel = document.getElementById('stageLockLabel');
+
+      const masterWallClock = document.getElementById('masterWallClock');
+      const livePhaseText = document.getElementById('livePhaseText');
+      const rundownTimelineContainer = document.getElementById('rundownTimelineContainer');
+
+      const songTabsContainer = document.getElementById('songTabsContainer');
+      const activeSongBanner = document.getElementById('activeSongBanner');
+      const lyricsSectionsContainer = document.getElementById('lyricsSectionsContainer');
+
+      // =========================================================================
+      // 4. HELPER UTILITIES (TOAST NOTIFICATIONS, FORMATTING & LOOKUPS)
+      // =========================================================================
+      function showToast(message, type) {
+        const container = document.getElementById('toastContainer');
+        if (!container) return;
+        const colors = {
+          info: 'bg-slate-900/95 border-sky-400/40 text-sky-200',
+          success: 'bg-slate-900/95 border-emerald-400/40 text-emerald-200',
+          warn: 'bg-slate-900/95 border-amber-400/50 text-amber-200',
+          error: 'bg-slate-900/95 border-rose-400/50 text-rose-200'
+        };
+        const toast = document.createElement('div');
+        toast.className = 'pointer-events-auto px-4 py-3 rounded-xl border shadow-2xl text-xs font-semibold backdrop-blur-md transition-all duration-300 ' + (colors[type] || colors.info);
+        toast.textContent = message;
+        container.appendChild(toast);
+        setTimeout(function () {
+          toast.style.opacity = '0';
+          toast.style.transform = 'translateY(6px)';
+          setTimeout(function () {
+            if (toast.parentNode) toast.parentNode.removeChild(toast);
+          }, 280);
+        }, 3200);
+      }
+
+      function escapeHtml(str) {
+        return String(str || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
+      function formatTimeTenths(seconds) {
+        if (!isFinite(seconds) || seconds < 0) return '00:00.0';
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        const tenths = Math.floor((seconds - Math.floor(seconds)) * 10);
+        return String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0') + '.' + String(tenths);
+      }
+
+      function formatTimeShort(seconds) {
+        if (!isFinite(seconds) || seconds < 0) return '00:00';
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+      }
+
+      function getFadeDurationSec() {
+        const val = parseFloat(fadeDurationSelect.value);
+        return isFinite(val) && val > 0 ? val : 3.5;
+      }
+
+      function getActiveSong() {
+        for (let i = 0; i < songsData.length; i++) {
+          if (songsData[i].id === activeSongId) return songsData[i];
+        }
+        return songsData[0];
+      }
+
+      // =========================================================================
+      // 5. AUDIO ENGINE: GAIN STAGING, VOLUME, DUCKING, FADE IN/OUT & MACROS
+      // =========================================================================
+      function applyEffectiveVolume() {
+        const effective = isMuted
+          ? 0
+          : Math.max(0, Math.min(1, masterVolume * fadeEnvelope * duckMultiplier));
+        audioEl.volume = effective;
+        gainPercentText.textContent = Math.round(effective * 100) + '%';
+      }
+
+      function setMasterVolumePercent(percent) {
+        const clamped = Math.max(0, Math.min(100, Math.round(percent)));
+        masterVolume = clamped / 100;
+        masterVolumeSlider.value = clamped;
+        masterVolValueText.textContent = clamped + '%';
+        if (clamped > 0 && isMuted) {
+          isMuted = false;
+          updateMuteButtonUI();
+        }
+        applyEffectiveVolume();
+      }
+
+      function updateMuteButtonUI() {
+        if (isMuted) {
+          muteIcon.textContent = '🔇';
+          muteLabel.textContent = '已靜音';
+          muteToggleBtn.className = 'px-2.5 py-1 rounded-lg bg-rose-500/25 hover:bg-rose-500/35 border border-rose-400/50 text-xs font-bold text-rose-200 flex items-center gap-1';
+        } else {
+          muteIcon.textContent = '🔊';
+          muteLabel.textContent = '音量';
+          muteToggleBtn.className = 'px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-white/15 text-xs font-bold text-slate-200 flex items-center gap-1';
+        }
+      }
+
+      function toggleMute() {
+        isMuted = !isMuted;
+        updateMuteButtonUI();
+        applyEffectiveVolume();
+        showToast(isMuted ? '🔇 已開啟靜音 (Mute)' : '🔊 已恢復輸出音量 (' + Math.round(masterVolume * 100) + '%)', isMuted ? 'warn' : 'info');
+      }
+
+      function toggleVoiceOverDucking() {
+        isDucked = !isDucked;
+        const targetDuck = isDucked ? 0.25 : 1.0;
+
+        if (isDucked) {
+          duckingToggleBtn.className = 'px-2.5 py-1 rounded-lg bg-indigo-500 text-white border border-indigo-300 text-[11px] font-extrabold flex items-center gap-1 shadow-lg shadow-indigo-500/30 transition';
+          duckingToggleBtn.innerHTML = '<span>🎙️ 壓低中 (25%) · 點此恢復</span>';
+          showToast('🎙️ 已平滑壓低背景音量至 25%（適合 MC / Story Teller 講話）', 'info');
+        } else {
+          duckingToggleBtn.className = 'px-2.5 py-1 rounded-lg bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-400/45 text-indigo-200 text-[11px] font-bold flex items-center gap-1 transition';
+          duckingToggleBtn.innerHTML = '<span>🎙️ MC 講話壓低 (25%)</span>';
+          showToast('🔊 已平滑恢復正常背景音量', 'success');
+        }
+
+        if (duckAnimationId !== null) {
+          cancelAnimationFrame(duckAnimationId);
+          duckAnimationId = null;
+        }
+
+        const startDuck = duckMultiplier;
+        const durationMs = 650;
+        const startTime = performance.now();
+
+        function stepDuck(now) {
+          const progress = Math.min(1, (now - startTime) / durationMs);
+          const eased = 1 - Math.pow(1 - progress, 3);
+          duckMultiplier = startDuck + (targetDuck - startDuck) * eased;
+          applyEffectiveVolume();
+          if (progress < 1) {
+            duckAnimationId = requestAnimationFrame(stepDuck);
+          } else {
+            duckAnimationId = null;
+            duckMultiplier = targetDuck;
+            applyEffectiveVolume();
+          }
+        }
+
+        duckAnimationId = requestAnimationFrame(stepDuck);
+      }
+
+      function checkStageLockGuard(actionName) {
+        if (!isStageLocked) return false;
+        showToast('🔒 防誤觸鎖定已開啟：已攔截「' + actionName + '」（請先點右上角解鎖）', 'warn');
+        return true;
+      }
+
+      function cancelActiveFade() {
+        if (fadeAnimationId !== null) {
+          cancelAnimationFrame(fadeAnimationId);
+          fadeAnimationId = null;
+        }
+      }
+
+      function clearFortySecMonitor() {
+        fortySecMonitorActive = false;
+        fortySecTriggeredFade = false;
+        autoFadeCountdownBadge.classList.add('hidden');
+      }
+
+      function syncCustomTrackMetadata() {
+        if (customPlaylist.length === 0) {
+          AUDIO_TRACKS[2].fileName = '自定義音樂清單（未上載）';
+          AUDIO_TRACKS[2].customUrl = null;
+          trackCard2Title.textContent = '自定義音樂清單';
+          trackStatus2.textContent = '0 首';
+          trackStatus2.className = 'text-[10px] font-mono text-slate-400';
+        } else {
+          if (customPlaylistActiveIndex >= customPlaylist.length) {
+            customPlaylistActiveIndex = 0;
+          }
+          const activeItem = customPlaylist[customPlaylistActiveIndex];
+          AUDIO_TRACKS[2].fileName = '[清單 ' + (customPlaylistActiveIndex + 1) + '/' + customPlaylist.length + '] ' + activeItem.name;
+          AUDIO_TRACKS[2].customUrl = activeItem.url;
+          trackCard2Title.textContent = activeItem.name;
+          trackStatus2.textContent = (customPlaylistActiveIndex + 1) + '/' + customPlaylist.length + ' 首';
+          trackStatus2.className = 'text-[10px] font-mono text-purple-300';
+        }
+      }
+
+      function renderCustomPlaylistUI() {
+        syncCustomTrackMetadata();
+        customPlaylistCountBadge.textContent = customPlaylist.length + ' 首曲目';
+        if (customPlaylist.length > 0) {
+          clearCustomPlaylistBtn.classList.remove('hidden');
+        } else {
+          clearCustomPlaylistBtn.classList.add('hidden');
+        }
+
+        if (customPlaylist.length === 0) {
+          customPlaylistItemsContainer.innerHTML =
+            '<div class="py-3 px-3 rounded-lg border border-dashed border-white/15 text-center text-xs text-slate-400 flex flex-col items-center gap-1.5">' +
+              '<span>尚未加入自定義 MP3（可一次多選本機 MP3 檔案加入清單）</span>' +
+              '<button type="button" id="emptyUploadTriggerBtn" class="px-3 py-1 rounded-lg bg-purple-500/20 hover:bg-purple-500/30 border border-purple-400/40 text-purple-200 font-bold text-[11px] transition">' +
+                '📂 立即選擇 MP3 加入清單' +
+              '</button>' +
+            '</div>';
+          const triggerBtn = document.getElementById('emptyUploadTriggerBtn');
+          if (triggerBtn) {
+            triggerBtn.addEventListener('click', function () {
+              customPlaylistInput.click();
+            });
+          }
+          return;
+        }
+
+        let html = '';
+        for (let i = 0; i < customPlaylist.length; i++) {
+          const item = customPlaylist[i];
+          const isCurrentInPlaylist = i === customPlaylistActiveIndex;
+          const isPlayingThis = currentTrackIndex === 2 && isCurrentInPlaylist;
+          const rowClass = isPlayingThis
+            ? 'flex items-center justify-between gap-2 px-2.5 py-2 rounded-lg bg-purple-500/25 border border-purple-400/60 shadow-sm'
+            : isCurrentInPlaylist
+              ? 'flex items-center justify-between gap-2 px-2.5 py-2 rounded-lg bg-slate-900/95 border border-purple-400/30 hover:border-purple-400/50 transition'
+              : 'flex items-center justify-between gap-2 px-2.5 py-2 rounded-lg bg-slate-900/70 border border-white/5 hover:border-white/20 transition';
+
+          html +=
+            '<div class="' + rowClass + '">' +
+              '<button type="button" data-pl-select="' + i + '" class="pl-select-btn flex items-center gap-2 min-w-0 flex-1 text-left">' +
+                '<span class="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded ' + (isPlayingThis ? 'bg-purple-400 text-slate-950' : 'bg-slate-800 text-slate-300') + '">' +
+                  String(i + 1).padStart(2, '0') +
+                '</span>' +
+                '<span class="text-xs font-bold ' + (isPlayingThis ? 'text-white' : 'text-slate-200') + ' truncate">' + escapeHtml(item.name) + '</span>' +
+                (item.durationText ? '<span class="text-[10px] font-mono text-slate-400 shrink-0">(' + escapeHtml(item.durationText) + ')</span>' : '') +
+              '</button>' +
+              '<div class="flex items-center gap-1 shrink-0">' +
+                '<button type="button" data-pl-play="' + i + '" class="pl-play-btn px-2 py-0.5 rounded bg-emerald-500/20 hover:bg-emerald-500/35 border border-emerald-400/40 text-emerald-200 text-[10px] font-bold" title="立即播放此首">▶</button>' +
+                '<button type="button" data-pl-up="' + i + '" class="pl-up-btn px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px]" title="上移" ' + (i === 0 ? 'disabled style="opacity:0.35"' : '') + '>↑</button>' +
+                '<button type="button" data-pl-down="' + i + '" class="pl-down-btn px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px]" title="下移" ' + (i === customPlaylist.length - 1 ? 'disabled style="opacity:0.35"' : '') + '>↓</button>' +
+                '<button type="button" data-pl-del="' + i + '" class="pl-del-btn px-1.5 py-0.5 rounded bg-slate-800 hover:bg-rose-500/30 text-slate-400 hover:text-rose-200 text-[10px]" title="移除此首">✕</button>' +
+              '</div>' +
+            '</div>';
+        }
+        customPlaylistItemsContainer.innerHTML = html;
+
+        // Bind row actions
+        const selectBtns = customPlaylistItemsContainer.querySelectorAll('.pl-select-btn');
+        for (let s = 0; s < selectBtns.length; s++) {
+          selectBtns[s].addEventListener('click', function () {
+            if (checkStageLockGuard('切換自定義曲目')) return;
+            const idx = parseInt(this.getAttribute('data-pl-select'), 10);
+            customPlaylistActiveIndex = idx;
+            renderCustomPlaylistUI();
+            selectTrack(2, false);
+          });
+        }
+
+        const playBtns = customPlaylistItemsContainer.querySelectorAll('.pl-play-btn');
+        for (let p = 0; p < playBtns.length; p++) {
+          playBtns[p].addEventListener('click', function () {
+            if (checkStageLockGuard('播放自定義曲目')) return;
+            const idx = parseInt(this.getAttribute('data-pl-play'), 10);
+            customPlaylistActiveIndex = idx;
+            renderCustomPlaylistUI();
+            selectTrack(2, true);
+          });
+        }
+
+        const upBtns = customPlaylistItemsContainer.querySelectorAll('.pl-up-btn');
+        for (let u = 0; u < upBtns.length; u++) {
+          upBtns[u].addEventListener('click', function () {
+            const idx = parseInt(this.getAttribute('data-pl-up'), 10);
+            if (idx <= 0) return;
+            const currentActiveItem = customPlaylist[customPlaylistActiveIndex];
+            const temp = customPlaylist[idx - 1];
+            customPlaylist[idx - 1] = customPlaylist[idx];
+            customPlaylist[idx] = temp;
+            customPlaylistActiveIndex = customPlaylist.indexOf(currentActiveItem);
+            renderCustomPlaylistUI();
+            updateTrackSelectionUI();
+          });
+        }
+
+        const downBtns = customPlaylistItemsContainer.querySelectorAll('.pl-down-btn');
+        for (let d = 0; d < downBtns.length; d++) {
+          downBtns[d].addEventListener('click', function () {
+            const idx = parseInt(this.getAttribute('data-pl-down'), 10);
+            if (idx >= customPlaylist.length - 1) return;
+            const currentActiveItem = customPlaylist[customPlaylistActiveIndex];
+            const temp = customPlaylist[idx + 1];
+            customPlaylist[idx + 1] = customPlaylist[idx];
+            customPlaylist[idx] = temp;
+            customPlaylistActiveIndex = customPlaylist.indexOf(currentActiveItem);
+            renderCustomPlaylistUI();
+            updateTrackSelectionUI();
+          });
+        }
+
+        const delBtns = customPlaylistItemsContainer.querySelectorAll('.pl-del-btn');
+        for (let r = 0; r < delBtns.length; r++) {
+          delBtns[r].addEventListener('click', function () {
+            if (checkStageLockGuard('移除自定義曲目')) return;
+            const idx = parseInt(this.getAttribute('data-pl-del'), 10);
+            const removed = customPlaylist.splice(idx, 1)[0];
+            if (removed && removed.url) {
+              try { URL.revokeObjectURL(removed.url); } catch (e) {}
+            }
+            if (customPlaylist.length === 0) {
+              customPlaylistActiveIndex = 0;
+              if (currentTrackIndex === 2) {
+                audioEl.pause();
+                audioEl.removeAttribute('src');
+                audioEl.load();
+              }
+            } else if (customPlaylistActiveIndex >= customPlaylist.length) {
+              customPlaylistActiveIndex = customPlaylist.length - 1;
+            }
+            renderCustomPlaylistUI();
+            if (currentTrackIndex === 2 && customPlaylist.length > 0) {
+              selectTrack(2, false);
+            } else {
+              updateTrackSelectionUI();
+              updateTimeDisplay();
+            }
+          });
+        }
+      }
+
+      function addFilesToCustomPlaylist(fileList) {
+        if (!fileList || fileList.length === 0) return;
+        const wasEmpty = customPlaylist.length === 0;
+        let addedCount = 0;
+
+        for (let i = 0; i < fileList.length; i++) {
+          const f = fileList[i];
+          const url = URL.createObjectURL(f);
+          const entry = {
+            id: 'pl_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+            name: f.name,
+            url: url,
+            durationText: ''
+          };
+          customPlaylist.push(entry);
+          addedCount++;
+
+          // Probe duration asynchronously
+          (function (itemRef) {
+            const probe = new Audio();
+            probe.preload = 'metadata';
+            probe.addEventListener('loadedmetadata', function () {
+              itemRef.durationText = formatTimeShort(probe.duration);
+              renderCustomPlaylistUI();
+            });
+            probe.src = itemRef.url;
+          })(entry);
+        }
+
+        if (addedCount > 0) {
+          renderCustomPlaylistUI();
+          if (wasEmpty || currentTrackIndex === 2) {
+            selectTrack(2, false);
+          } else {
+            updateTrackSelectionUI();
+          }
+          showToast('🎵 已加入 ' + addedCount + ' 首 MP3 至自定義播放清單！', 'success');
+        }
+      }
+
+      function updateTrackSelectionUI() {
+        syncCustomTrackMetadata();
+        const track = AUDIO_TRACKS[currentTrackIndex];
+        oledTrackTitle.textContent = track.fileName;
+        currentTrackBadgeName.textContent = track.fileName;
+
+        const baseCard01 = 'track-select-card cursor-pointer text-left p-3 rounded-xl border transition-all bg-slate-900/60 border-white/10 hover:border-white/25 flex flex-col justify-between gap-2';
+        const baseCard2 = 'track-select-card text-left p-3 rounded-xl border transition-all bg-slate-900/60 border-white/10 hover:border-white/25';
+        trackCard0.className = currentTrackIndex === 0
+          ? 'track-select-card cursor-pointer text-left p-3 rounded-xl border transition-all bg-amber-400/15 border-amber-400/60 shadow-lg shadow-amber-500/10 flex flex-col justify-between gap-2'
+          : baseCard01;
+        trackCard1.className = currentTrackIndex === 1
+          ? 'track-select-card cursor-pointer text-left p-3 rounded-xl border transition-all bg-sky-400/15 border-sky-400/60 shadow-lg shadow-sky-500/10 flex flex-col justify-between gap-2'
+          : baseCard01;
+        trackCard2.className = currentTrackIndex === 2
+          ? 'track-select-card text-left p-3 rounded-xl border transition-all bg-purple-400/15 border-purple-400/60 shadow-lg shadow-purple-500/10'
+          : baseCard2;
+      }
+
+      function selectTrack(index, autoPlay) {
+        cancelActiveFade();
+        clearFortySecMonitor();
+        currentTrackIndex = (index === 1 || index === 2) ? index : 0;
+        syncCustomTrackMetadata();
+
+        const track = AUDIO_TRACKS[currentTrackIndex];
+        const targetSrc = track.customUrl || track.defaultSrc;
+
+        audioEl.pause();
+        if (targetSrc) {
+          audioEl.src = targetSrc;
+          audioEl.loop = isLoopEnabled;
+          fadeEnvelope = 1.0;
+          applyEffectiveVolume();
+          audioEl.load();
+        } else {
+          audioEl.removeAttribute('src');
+          audioEl.load();
+        }
+
+        updateTrackSelectionUI();
+        updateTimeDisplay();
+
+        if (autoPlay) {
+          if (!targetSrc) {
+            showToast('自定義清單尚未上載 MP3，請先點「＋ 上載 MP3」加入音樂', 'warn');
+            return;
+          }
+          audioEl.play().catch(function () {
+            showToast('未能自動播放 ' + track.fileName + '，請確認檔案是否有效', 'warn');
+          });
+        }
+      }
+
+      function rampFadeEnvelope(fromEnv, toEnv, durationSec, onComplete) {
+        cancelActiveFade();
+        const startEnv = Math.max(0, Math.min(1, fromEnv));
+        const endEnv = Math.max(0, Math.min(1, toEnv));
+        const durationMs = Math.max(100, durationSec * 1000);
+        const startTime = performance.now();
+
+        fadeEnvelope = startEnv;
+        applyEffectiveVolume();
+
+        function step(now) {
+          const elapsed = now - startTime;
+          const progress = Math.min(1, elapsed / durationMs);
+          const eased = progress < 0.5
+            ? 2 * progress * progress
+            : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+
+          fadeEnvelope = Math.max(0, Math.min(1, startEnv + (endEnv - startEnv) * eased));
+          applyEffectiveVolume();
+
+          if (progress < 1) {
+            fadeAnimationId = requestAnimationFrame(step);
+          } else {
+            fadeAnimationId = null;
+            fadeEnvelope = endEnv;
+            applyEffectiveVolume();
+            if (typeof onComplete === 'function') onComplete();
+          }
+        }
+
+        fadeAnimationId = requestAnimationFrame(step);
+      }
+
+      function triggerFadeIn(startAtSeconds) {
+        const track = AUDIO_TRACKS[currentTrackIndex];
+        const fadeSec = getFadeDurationSec();
+
+        if (typeof startAtSeconds === 'number' && startAtSeconds >= 0) {
+          try {
+            audioEl.currentTime = startAtSeconds;
+          } catch (e) {}
+        }
+
+        const initialEnv = audioEl.paused ? 0 : fadeEnvelope;
+        fadeEnvelope = initialEnv;
+        applyEffectiveVolume();
+
+        audioEl.play().then(function () {
+          playbackStatePill.textContent = 'FADING IN';
+          playbackStatePill.className = 'px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider bg-sky-500/25 text-sky-300';
+          rampFadeEnvelope(initialEnv, 1, fadeSec, function () {
+            updatePlaybackBadge();
+          });
+        }).catch(function () {
+          showToast('請先確認已載入 ' + track.fileName + '（可點右上「載入本機 MP3」選取檔案）', 'warn');
+        });
+      }
+
+      function triggerFadeOut() {
+        const fadeSec = getFadeDurationSec();
+        if (audioEl.paused) {
+          fadeEnvelope = 1;
+          applyEffectiveVolume();
+          showToast('目前音軌已處於暫停狀態', 'info');
+          return;
+        }
+        playbackStatePill.textContent = 'FADING OUT';
+        playbackStatePill.className = 'px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider bg-rose-500/25 text-rose-300';
+
+        rampFadeEnvelope(fadeEnvelope, 0, fadeSec, function () {
+          audioEl.pause();
+          fadeEnvelope = 1;
+          applyEffectiveVolume();
+          clearFortySecMonitor();
+          updatePlaybackBadge();
+          showToast('已完成平滑淡出並暫停播放', 'success');
+        });
+      }
+
+      // Macro 1 (15:40 Cue): Play 《主你知道.mp3》 from 0:00 and auto Fade Out at 40.0s
+      function runMacro40sFadeOut() {
+        if (checkStageLockGuard('15:40 流程快捷鍵')) return;
+        if (currentTrackIndex !== 0) {
+          selectTrack(0, false);
+        }
+        cancelActiveFade();
+        clearFortySecMonitor();
+
+        try {
+          audioEl.currentTime = 0;
+        } catch (e) {}
+        fadeEnvelope = 1;
+        applyEffectiveVolume();
+
+        audioEl.play().then(function () {
+          fortySecMonitorActive = true;
+          fortySecTriggeredFade = false;
+          autoFadeCountdownBadge.classList.remove('hidden');
+          autoFadeCountdownBadge.textContent = '距離自動淡出：40.0s';
+          showToast('⚡ 已啟動 15:40 流程：《主你知道.mp3》播放 40 秒後將自動淡出', 'warn');
+        }).catch(function () {
+          showToast('無法播放《主你知道.mp3》，請點「載入本機 MP3」選取檔案', 'error');
+        });
+      }
+
+      // Macro 2 (15:50 Cue): Seek 《主你知道.mp3》 to 0:30 and Fade In, plus show V1 C V2 C lyrics
+      function runMacro30sFadeIn() {
+        if (checkStageLockGuard('15:50 流程快捷鍵')) return;
+        if (currentTrackIndex !== 0) {
+          selectTrack(0, false);
+        }
+        cancelActiveFade();
+        clearFortySecMonitor();
+
+        activeSongId = 'song1';
+        activeLyricSectionIndex = 0;
+        renderSongTabs();
+        renderActiveSongLyrics();
+
+        const seekAndFade = function () {
+          try {
+            audioEl.currentTime = 30;
+          } catch (e) {}
+          triggerFadeIn(30);
+          showToast('⚡ 已啟動 15:50 流程：《主你知道.mp3》由 0:30 淡入播放並顯示 V1→C→V2→C 歌詞', 'info');
+        };
+
+        if (audioEl.readyState >= 1) {
+          seekAndFade();
+        } else {
+          audioEl.addEventListener('loadedmetadata', function onMeta() {
+            audioEl.removeEventListener('loadedmetadata', onMeta);
+            seekAndFade();
+          });
+          audioEl.load();
+        }
+      }
+
+      // Macro 3 (17:10 Cue): Switch to 《來自天上的信.mp3》, Fade In from 0:00, and display Song #6 lyrics
+      function runMacro1710LetterSong() {
+        if (checkStageLockGuard('17:10 流程快捷鍵')) return;
+        activeSongId = 'song6';
+        activeLyricSectionIndex = 0;
+        renderSongTabs();
+        renderActiveSongLyrics();
+
+        selectTrack(1, false);
+        triggerFadeIn(0);
+        showToast('⚡ 已啟動 17:10 流程：《來自天上的信.mp3》淡入播放並顯示歌詞', 'info');
+      }
+
+      function updatePlaybackBadge() {
+        if (fadeAnimationId !== null) return;
+        if (!audioEl.paused) {
+          playbackStatePill.textContent = 'PLAYING';
+          playbackStatePill.className = 'px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider bg-emerald-500/25 text-emerald-300';
+        } else {
+          playbackStatePill.textContent = 'PAUSED / READY';
+          playbackStatePill.className = 'px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider bg-slate-800 text-slate-300';
+        }
+      }
+
+      function updateTimeDisplay() {
+        const cur = audioEl.currentTime || 0;
+        const dur = audioEl.duration;
+
+        elapsedTimeDisplay.textContent = formatTimeTenths(cur);
+        gainPercentText.textContent = Math.round((audioEl.volume || 0) * 100) + '%';
+
+        if (isFinite(dur) && dur > 0) {
+          const rem = Math.max(0, dur - cur);
+          remainingTimeDisplay.textContent = formatTimeShort(rem);
+          totalDurationDisplay.textContent = formatTimeShort(dur);
+          endMarkerText.textContent = formatTimeShort(dur);
+          if (!isSeeking) {
+            seekSlider.value = Math.round((cur / dur) * 1000);
+          }
+        } else {
+          remainingTimeDisplay.textContent = '00:00';
+          totalDurationDisplay.textContent = '00:00';
+          endMarkerText.textContent = 'END';
+          if (!isSeeking) seekSlider.value = 0;
+        }
+
+        if (fortySecMonitorActive && !audioEl.paused) {
+          const remainingTo40 = Math.max(0, 40 - cur);
+          autoFadeCountdownBadge.textContent = '距離自動淡出：' + remainingTo40.toFixed(1) + 's';
+          if (cur >= 40 && !fortySecTriggeredFade) {
+            fortySecTriggeredFade = true;
+            fortySecMonitorActive = false;
+            autoFadeCountdownBadge.textContent = '正在自動淡出...';
+            triggerFadeOut();
+          }
+        }
+      }
+
+      function updateVuMeterAnimation() {
+        const isPlaying = !audioEl.paused && audioEl.volume > 0.01;
+        const vol = audioEl.volume || 0;
+        const now = performance.now() * 0.008;
+
+        for (let i = 0; i < vuBars.length; i++) {
+          const bar = vuBars[i];
+          if (!isPlaying) {
+            bar.style.height = '4px';
+            bar.style.opacity = '0.35';
+          } else {
+            const wave = 0.45 + 0.55 * Math.abs(Math.sin(now + i * 0.9));
+            const heightPx = Math.max(4, Math.round(vol * wave * 22));
+            bar.style.height = heightPx + 'px';
+            bar.style.opacity = '1';
+          }
+        }
+      }
+
+      function probeDefaultTracks() {
+        [0, 1].forEach(function (idx) {
+          const track = AUDIO_TRACKS[idx];
+          const tester = new Audio();
+          tester.preload = 'metadata';
+          const statusEl = idx === 0 ? trackStatus0 : trackStatus1;
+          tester.addEventListener('loadedmetadata', function () {
+            statusEl.textContent = 'LOADED (' + formatTimeShort(tester.duration) + ')';
+            statusEl.className = 'text-[10px] font-mono text-emerald-400';
+          });
+          tester.addEventListener('error', function () {
+            statusEl.textContent = '待載入 MP3';
+            statusEl.className = 'text-[10px] font-mono text-amber-400';
+          });
+          tester.src = track.defaultSrc;
+        });
+      }
+
+      function replacePresetTrackWithFile(trackIdx, file) {
+        if (!file) return;
+        const track = AUDIO_TRACKS[trackIdx];
+        if (!track) return;
+
+        if (track.customUrl) {
+          try { URL.revokeObjectURL(track.customUrl); } catch (e) {}
+        }
+        const url = URL.createObjectURL(file);
+        track.customUrl = url;
+        track.fileName = '[替代] ' + file.name;
+
+        const titleEl = trackIdx === 0 ? trackTitle0 : trackTitle1;
+        const statusEl = trackIdx === 0 ? trackStatus0 : trackStatus1;
+        const resetBtn = trackIdx === 0 ? resetTrack0Btn : resetTrack1Btn;
+
+        titleEl.textContent = file.name;
+        statusEl.textContent = '已替代 MP3';
+        statusEl.className = 'text-[10px] font-mono text-amber-300 font-bold';
+        resetBtn.classList.remove('hidden');
+
+        // Probe duration for status badge
+        const probe = new Audio();
+        probe.preload = 'metadata';
+        probe.addEventListener('loadedmetadata', function () {
+          statusEl.textContent = '替代 (' + formatTimeShort(probe.duration) + ')';
+        });
+        probe.src = url;
+
+        selectTrack(trackIdx, false);
+        showToast('🔄 已用「' + file.name + '」替代 TRACK 0' + (trackIdx + 1) + '（所有流程快捷鍵將自動套用此新音檔）', 'success');
+      }
+
+      function resetPresetTrackToDefault(trackIdx) {
+        const track = AUDIO_TRACKS[trackIdx];
+        if (!track) return;
+
+        if (track.customUrl) {
+          try { URL.revokeObjectURL(track.customUrl); } catch (e) {}
+          track.customUrl = null;
+        }
+        track.fileName = track.defaultFileName;
+
+        const titleEl = trackIdx === 0 ? trackTitle0 : trackTitle1;
+        const statusEl = trackIdx === 0 ? trackStatus0 : trackStatus1;
+        const resetBtn = trackIdx === 0 ? resetTrack0Btn : resetTrack1Btn;
+
+        titleEl.textContent = track.defaultFileName;
+        statusEl.textContent = 'READY';
+        statusEl.className = 'text-[10px] font-mono text-emerald-400';
+        resetBtn.classList.add('hidden');
+
+        // Re-probe default file
+        const tester = new Audio();
+        tester.preload = 'metadata';
+        tester.addEventListener('loadedmetadata', function () {
+          statusEl.textContent = 'LOADED (' + formatTimeShort(tester.duration) + ')';
+          statusEl.className = 'text-[10px] font-mono text-emerald-400';
+        });
+        tester.addEventListener('error', function () {
+          statusEl.textContent = '待載入 MP3';
+          statusEl.className = 'text-[10px] font-mono text-amber-400';
+        });
+        tester.src = track.defaultSrc;
+
+        if (currentTrackIndex === trackIdx) {
+          selectTrack(trackIdx, false);
+        } else {
+          updateTrackSelectionUI();
+        }
+        showToast('↺ 已還原 TRACK 0' + (trackIdx + 1) + ' 為預設《' + track.defaultFileName + '》', 'info');
+      }
+
+      // =========================================================================
+      // 6. REAL-TIME WALL CLOCK & POST CHORUS RUNDOWN TIMELINE
+      // =========================================================================
+      function getCurrentActiveRundownIndex(nowDate) {
+        const hhmm = nowDate.getHours() * 100 + nowDate.getMinutes();
+        if (hhmm < 1535 || hhmm > 1730) return -1;
+        let matchedIdx = 0;
+        for (let i = 0; i < RUNDOWN_ITEMS.length; i++) {
+          const slotNum = parseInt(RUNDOWN_ITEMS[i].time, 10);
+          if (hhmm >= slotNum) {
+            matchedIdx = i;
+          }
+        }
+        return matchedIdx;
+      }
+
+      function updateWallClockAndSchedule() {
+        const now = new Date();
+        const hh = String(now.getHours()).padStart(2, '0');
+        const mm = String(now.getMinutes()).padStart(2, '0');
+        const ss = String(now.getSeconds()).padStart(2, '0');
+        masterWallClock.textContent = hh + ':' + mm + ':' + ss;
+
+        const activeIdx = getCurrentActiveRundownIndex(now);
+        if (activeIdx >= 0 && RUNDOWN_ITEMS[activeIdx]) {
+          livePhaseText.textContent = RUNDOWN_ITEMS[activeIdx].displayTime + ' · ' + RUNDOWN_ITEMS[activeIdx].content;
+        } else {
+          livePhaseText.textContent = '待機中（活動時段 15:35–17:10）';
+        }
+
+        if (now.getMinutes() !== lastRenderedMinute) {
+          lastRenderedMinute = now.getMinutes();
+          renderRundownTimeline();
+        }
+      }
+
+      function renderRundownTimeline() {
+        const activeIdx = getCurrentActiveRundownIndex(new Date());
+        let html = '<div class="relative flex flex-col">';
+
+        for (let i = 0; i < RUNDOWN_ITEMS.length; i++) {
+          const item = RUNDOWN_ITEMS[i];
+          const isCurrent = i === activeIdx;
+          const isLast = i === RUNDOWN_ITEMS.length - 1;
+          const isSubStep = item.displayTime.indexOf('+') >= 0;
+          const cleanTimeLabel = item.displayTime.replace('+', '');
+          const prevCleanTime = i > 0 ? RUNDOWN_ITEMS[i - 1].displayTime.replace('+', '') : '';
+          const showTimeOnAxis = !isSubStep || cleanTimeLabel !== prevCleanTime;
+
+          // Timeline node indicator styling
+          let nodeHtml = '';
+          if (isCurrent) {
+            nodeHtml =
+              '<span class="relative flex h-3.5 w-3.5 items-center justify-center">' +
+                '<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>' +
+                '<span class="relative inline-flex rounded-full h-3 w-3 bg-amber-400 ring-4 ring-amber-400/20"></span>' +
+              '</span>';
+          } else if (item.isComputerCue) {
+            nodeHtml = '<span class="inline-flex rounded-full h-3 w-3 bg-sky-400 ring-4 ring-sky-400/15"></span>';
+          } else if (!isSubStep) {
+            nodeHtml = '<span class="inline-flex rounded-full h-2.5 w-2.5 bg-slate-400 ring-4 ring-slate-800"></span>';
+          } else {
+            nodeHtml = '<span class="inline-flex rounded-full h-2 w-2 bg-slate-600"></span>';
+          }
+
+          const cardClass = isCurrent
+            ? 'rounded-xl p-3 border border-amber-400/70 bg-amber-400/15 shadow-lg shadow-amber-500/10'
+            : item.isComputerCue
+              ? 'rounded-xl p-3 border border-sky-400/25 bg-slate-900/80 hover:border-sky-400/50 transition'
+              : 'rounded-xl p-2.5 border border-white/5 bg-slate-950/45';
+
+          let cueButtonHtml = '';
+          if (item.isComputerCue) {
+            cueButtonHtml = '<button type="button" data-rundown-idx="' + i + '" class="rundown-cue-btn shrink-0 px-2.5 py-1 rounded-lg bg-sky-500/20 hover:bg-sky-500/35 border border-sky-400/40 text-sky-200 text-[11px] font-bold transition">💻 執行 Cue</button>';
+          }
+
+          html +=
+            '<div ' + (isCurrent ? 'id="activeRundownNode" ' : '') + 'class="relative flex items-stretch gap-3">' +
+              // Left Time Axis Column
+              '<div class="w-12 shrink-0 pt-2.5 text-right">' +
+                (showTimeOnAxis
+                  ? '<span class="font-mono text-xs font-extrabold tabular-nums ' + (isCurrent ? 'text-amber-300' : !isSubStep ? 'text-slate-200' : 'text-slate-500') + '">' + escapeHtml(cleanTimeLabel) + '</span>'
+                  : '<span class="font-mono text-[10px] text-slate-600">│</span>') +
+              '</div>' +
+              // Center Vertical Rail & Node Column
+              '<div class="relative flex flex-col items-center w-5 shrink-0">' +
+                '<div class="pt-3 z-10 flex items-center justify-center">' + nodeHtml + '</div>' +
+                (!isLast
+                  ? '<div class="w-[2px] flex-1 mt-1 ' + (isCurrent ? 'bg-gradient-to-b from-amber-400 to-slate-700' : 'bg-slate-800') + '"></div>'
+                  : '') +
+              '</div>' +
+              // Right Event Card Column
+              '<div class="flex-1 min-w-0 pb-2.5">' +
+                '<div class="' + cardClass + '">' +
+                  '<div class="flex items-start justify-between gap-2">' +
+                    '<div class="min-w-0">' +
+                      '<div class="text-xs sm:text-sm font-bold text-white leading-snug">' + escapeHtml(item.content) + '</div>' +
+                      '<div class="flex flex-wrap items-center gap-2 mt-1 text-[11px]">' +
+                        '<span class="text-slate-400">負責：<strong class="text-slate-200">' + escapeHtml(item.pic) + '</strong></span>' +
+                        (item.remark ? '<span class="px-1.5 py-0.5 rounded bg-amber-400/10 text-amber-300 border border-amber-400/20">' + escapeHtml(item.remark) + '</span>' : '') +
+                      '</div>' +
+                    '</div>' +
+                    cueButtonHtml +
+                  '</div>' +
+                '</div>' +
+              '</div>' +
+            '</div>';
+        }
+
+        html += '</div>';
+        rundownTimelineContainer.innerHTML = html;
+
+        const cueBtns = rundownTimelineContainer.querySelectorAll('.rundown-cue-btn');
+        for (let j = 0; j < cueBtns.length; j++) {
+          cueBtns[j].addEventListener('click', function () {
+            const idx = parseInt(this.getAttribute('data-rundown-idx'), 10);
+            const cueItem = RUNDOWN_ITEMS[idx];
+            if (!cueItem) return;
+
+            if (cueItem.actionType === 'macro40s') {
+              runMacro40sFadeOut();
+            } else if (cueItem.actionType === 'macro30s') {
+              runMacro30sFadeIn();
+            } else if (cueItem.actionType === 'fadeout') {
+              triggerFadeOut();
+            } else if (cueItem.actionType === 'soundcheck') {
+              showToast('15:35 Sound Check：請測試《主你知道.mp3》與《來自天上的信.mp3》輸出音量', 'info');
+            } else if (cueItem.actionType === 'playLetterSong') {
+              runMacro1710LetterSong();
+            } else if (cueItem.songId) {
+              activeSongId = cueItem.songId;
+              activeLyricSectionIndex = 0;
+              renderSongTabs();
+              renderActiveSongLyrics();
+              showToast('已切換歌詞面板至：' + cueItem.content, 'info');
+            }
+          });
+        }
+      }
+
+      // =========================================================================
+      // 7. LYRICS STAGE DISPLAY (UNIFIED SHEET, READ-ONLY)
+      // =========================================================================
+      function renderSongTabs() {
+        let html = '';
+        for (let i = 0; i < songsData.length; i++) {
+          const song = songsData[i];
+          const isActive = song.id === activeSongId;
+
+          const btnClass = isActive
+            ? 'group relative overflow-hidden text-left p-3 rounded-xl border border-amber-400/75 bg-gradient-to-br from-amber-400/20 via-amber-500/10 to-slate-900/90 shadow-lg shadow-amber-500/15 transition-all'
+            : 'group relative overflow-hidden text-left p-3 rounded-xl border border-white/10 bg-slate-900/55 hover:bg-slate-800/70 hover:border-white/25 transition-all';
+
+          html +=
+            '<button type="button" data-song-id="' + song.id + '" class="song-tab-btn ' + btnClass + '">' +
+              (isActive ? '<span class="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-amber-300 via-amber-400 to-sky-400"></span>' : '') +
+              '<div class="flex items-center justify-between gap-1 mb-1">' +
+                '<div class="flex items-center gap-1.5">' +
+                  '<span class="font-mono text-[10px] font-bold ' + (isActive ? 'text-amber-300' : 'text-slate-500') + '">#' + escapeHtml(song.number) + '</span>' +
+                  '<span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ' + (isActive ? 'bg-amber-400 text-slate-950' : 'bg-slate-800/90 text-slate-300') + '">' + escapeHtml(song.timeSlot) + '</span>' +
+                '</div>' +
+              '</div>' +
+              '<div class="text-xs sm:text-sm font-extrabold ' + (isActive ? 'text-white' : 'text-slate-200 group-hover:text-white') + ' truncate">' + escapeHtml(song.title) + '</div>' +
+            '</button>';
+        }
+
+        songTabsContainer.innerHTML = html;
+
+        const tabs = songTabsContainer.querySelectorAll('.song-tab-btn');
+        for (let j = 0; j < tabs.length; j++) {
+          tabs[j].addEventListener('click', function () {
+            activeSongId = this.getAttribute('data-song-id');
+            activeLyricSectionIndex = 0;
+            renderSongTabs();
+            renderActiveSongLyrics();
+          });
+        }
+      }
+
+      function focusLyricSection(secIdx, shouldScroll) {
+        const song = getActiveSong();
+        if (!song || secIdx < 0 || secIdx >= song.sections.length) return;
+        activeLyricSectionIndex = secIdx;
+        renderActiveSongLyrics();
+        if (shouldScroll) {
+          const targetCard = lyricsSectionsContainer.querySelector('[data-lyric-card-idx="' + secIdx + '"]');
+          if (targetCard) {
+            targetCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
+        }
+      }
+
+      function renderActiveSongLyrics() {
+        const song = getActiveSong();
+        if (!song) return;
+
+        if (activeLyricSectionIndex >= song.sections.length) {
+          activeLyricSectionIndex = 0;
+        }
+
+        const googleSearchUrl = 'https://www.google.com/search?q=' + encodeURIComponent(song.searchQuery || (song.title + ' 歌詞'));
+
+        // Build clickable quick-jump pills for every Verse / Chorus in the banner
+        let quickJumpPillsHtml = '';
+        for (let p = 0; p < song.sections.length; p++) {
+          const secItem = song.sections[p];
+          const isSecFocused = p === activeLyricSectionIndex;
+          const isChorusPill = secItem.type === 'chorus';
+          const pillStyle = isSecFocused
+            ? (isChorusPill
+              ? 'bg-amber-400 text-slate-950 font-extrabold shadow-md shadow-amber-500/30'
+              : 'bg-sky-400 text-slate-950 font-extrabold shadow-md shadow-sky-500/30')
+            : 'bg-slate-800/90 hover:bg-slate-700 text-slate-300 border border-white/10 font-semibold';
+          quickJumpPillsHtml +=
+            '<button type="button" data-jump-sec="' + p + '" class="banner-jump-pill px-2.5 py-1 rounded-lg font-mono text-[11px] transition ' + pillStyle + '">' +
+              escapeHtml(secItem.label) +
+            '</button>';
+        }
+
+        activeSongBanner.innerHTML =
+          '<div class="pointer-events-none absolute -right-10 -top-10 w-40 h-40 rounded-full bg-amber-400/10 blur-2xl"></div>' +
+          '<div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3 relative z-10">' +
+            '<div class="flex items-start gap-3.5 min-w-0">' +
+              '<div class="hidden sm:flex w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400/25 via-slate-800 to-sky-500/20 border border-amber-400/35 items-center justify-center shrink-0 shadow-inner">' +
+                '<span class="font-mono text-sm font-extrabold text-amber-300">' + escapeHtml(song.number) + '</span>' +
+              '</div>' +
+              '<div class="min-w-0">' +
+                '<div class="flex flex-wrap items-center gap-2">' +
+                  '<span class="px-2.5 py-0.5 rounded-full bg-amber-400/15 border border-amber-400/35 text-amber-300 font-mono text-[11px] font-bold">' + escapeHtml(song.timeSlot) + '</span>' +
+                  '<h3 class="text-xl sm:text-2xl font-black text-white tracking-tight">' + escapeHtml(song.title) + '</h3>' +
+                '</div>' +
+                '<p class="text-xs text-slate-400 mt-1">' + escapeHtml(song.subtitle) + '</p>' +
+                (song.themeSummary ? '<p class="text-xs text-slate-300/90 mt-1.5 leading-relaxed">' + escapeHtml(song.themeSummary) + '</p>' : '') +
+              '</div>' +
+            '</div>' +
+            '<div class="shrink-0 flex sm:flex-col items-center sm:items-end justify-between gap-2">' +
+              '<a href="' + googleSearchUrl + '" target="_blank" rel="noopener noreferrer" class="console-btn px-3 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-400/35 text-emerald-200 text-xs font-bold flex items-center gap-1.5">' +
+                '<span>🔍 搜尋完整歌詞</span>' +
+              '</a>' +
+              '<span class="text-[11px] font-mono text-slate-400">' + escapeHtml(song.structureSummary) + '</span>' +
+            '</div>' +
+          '</div>' +
+          '<div class="pt-2.5 border-t border-white/10 flex flex-wrap items-center justify-between gap-2 relative z-10">' +
+            '<div class="flex flex-wrap items-center gap-1.5">' +
+              '<span class="text-[10px] font-mono uppercase tracking-wider text-slate-500 mr-1">段落快速切換:</span>' +
+              quickJumpPillsHtml +
+            '</div>' +
+            '<span class="text-[11px] text-amber-200/75">' + escapeHtml(song.openingCue) + '</span>' +
+          '</div>';
+
+        const bannerPills = activeSongBanner.querySelectorAll('.banner-jump-pill');
+        for (let bp = 0; bp < bannerPills.length; bp++) {
+          bannerPills[bp].addEventListener('click', function () {
+            const targetSec = parseInt(this.getAttribute('data-jump-sec'), 10) || 0;
+            focusLyricSection(targetSec, true);
+          });
+        }
+
+        const isCentered = lyricsAlignMode === 'center';
+        const baseFontPx = Math.round(20 * (lyricsFontScale / 100));
+
+        // Unified compact lyric sheet: Verses & Choruses flow cleanly together inside one sheet
+        let sectionsHtml = '';
+        for (let i = 0; i < song.sections.length; i++) {
+          const sec = song.sections[i];
+          const isChorus = sec.type === 'chorus';
+          const isBridge = sec.type === 'bridge';
+          const isFocused = i === activeLyricSectionIndex;
+
+          const badgeClass = isChorus
+            ? 'bg-amber-400/15 text-amber-300 border-amber-400/40'
+            : isBridge
+              ? 'bg-purple-400/15 text-purple-300 border-purple-400/40'
+              : 'bg-sky-400/15 text-sky-300 border-sky-400/40';
+
+          const focusedBlockClass = isFocused
+            ? (isChorus ? 'lyric-block-focused-chorus' : isBridge ? 'lyric-block-focused-bridge' : 'lyric-block-focused-verse')
+            : 'border-l-2 border-transparent hover:bg-white/[0.02] opacity-85 hover:opacity-100';
+
+          const hasLyrics = sec.text && sec.text.trim().length > 0;
+
+          let bodyHtml = '';
+          if (hasLyrics) {
+            const lines = sec.text.split(/\r?\n/);
+            let linesHtml = '';
+            for (let l = 0; l < lines.length; l++) {
+              const lineText = lines[l].trim();
+              if (lineText.length === 0) {
+                linesHtml += '<div class="h-2.5"></div>';
+              } else {
+                linesHtml +=
+                  '<div class="lyric-line ' + (isFocused ? 'text-white font-bold' : 'text-slate-200 font-medium') + '">' +
+                    escapeHtml(lineText) +
+                  '</div>';
+              }
+            }
+            bodyHtml =
+              '<div style="font-size: ' + baseFontPx + 'px; line-height: 1.75;" class="' + (isCentered ? 'text-center' : 'text-left') + ' tracking-wide">' +
+                linesHtml +
+              '</div>';
+          } else {
+            bodyHtml =
+              '<div class="' + (isCentered ? 'text-center' : 'text-left') + ' py-1 text-xs font-mono text-slate-500">' +
+                '（待於 HTML 程式碼 DEFAULT_SONGS 填入此段歌詞）' +
+              '</div>';
+          }
+
+          sectionsHtml +=
+            '<div data-lyric-card-idx="' + i + '" class="lyric-block cursor-pointer rounded-xl px-4 sm:px-6 py-3.5 flex flex-col gap-2">' +
+              '<div class="flex items-center ' + (isCentered ? 'justify-center' : 'justify-start') + ' gap-2">' +
+                '<span class="px-2 py-0.5 rounded-md border text-[11px] font-mono font-bold tracking-wider ' + badgeClass + '">' +
+                  (isChorus ? '★ ' : '') + escapeHtml(sec.label) +
+                '</span>' +
+                (isFocused
+                  ? '<span class="px-1.5 py-0.5 rounded bg-emerald-400/20 text-emerald-300 font-mono text-[10px] font-bold">● ACTIVE</span>'
+                  : '') +
+              '</div>' +
+              bodyHtml +
+            '</div>';
+        }
+
+        lyricsSectionsContainer.innerHTML = sectionsHtml;
+
+        // Re-apply focus highlight class cleanly
+        const lyricCards = lyricsSectionsContainer.querySelectorAll('[data-lyric-card-idx]');
+        for (let c = 0; c < lyricCards.length; c++) {
+          const sec = song.sections[c];
+          const isChorus = sec.type === 'chorus';
+          const isBridge = sec.type === 'bridge';
+          if (c === activeLyricSectionIndex) {
+            lyricCards[c].classList.add(isChorus ? 'lyric-block-focused-chorus' : isBridge ? 'lyric-block-focused-bridge' : 'lyric-block-focused-verse');
+          } else {
+            lyricCards[c].classList.add('border-l-2', 'border-transparent', 'hover:bg-white/[0.02]', 'opacity-85', 'hover:opacity-100');
+          }
+
+          lyricCards[c].addEventListener('click', function () {
+            const clickedIdx = parseInt(this.getAttribute('data-lyric-card-idx'), 10);
+            if (clickedIdx !== activeLyricSectionIndex) {
+              activeLyricSectionIndex = clickedIdx;
+              renderActiveSongLyrics();
+            }
+          });
+        }
+      }
+
+      // =========================================================================
+      // 8. FONT THEME SWITCHER
+      // =========================================================================
+      function applyFontTheme(themeName, notify) {
+        const valid = ['serif', 'wenkai', 'maru'];
+        const chosen = valid.indexOf(themeName) >= 0 ? themeName : 'serif';
+        document.documentElement.setAttribute('data-font-theme', chosen);
+        try {
+          localStorage.setItem(FONT_THEME_KEY, chosen);
+        } catch (e) {}
+
+        const btns = document.querySelectorAll('.font-theme-btn');
+        for (let i = 0; i < btns.length; i++) {
+          const btn = btns[i];
+          const isMatch = btn.getAttribute('data-font-btn') === chosen;
+          btn.className = isMatch
+            ? 'font-theme-btn px-2.5 py-1 rounded-lg text-xs font-bold transition bg-amber-400 text-slate-950 shadow-sm'
+            : 'font-theme-btn px-2.5 py-1 rounded-lg text-xs font-semibold transition text-slate-300 hover:text-white';
+        }
+
+        if (notify) {
+          const names = {
+            serif: '典雅宋體 (Noto Serif TC)',
+            wenkai: '溫潤文楷 (LXGW WenKai TC)',
+            maru: '現代圓體 (Zen Maru Gothic)'
+          };
+          showToast('已切換字體為：' + names[chosen], 'info');
+        }
+      }
+
+      // =========================================================================
+      // 11. EVENT LISTENERS & INITIALIZATION
+      // =========================================================================
+      trackCard0.addEventListener('click', function () {
+        if (checkStageLockGuard('切換音軌')) return;
+        selectTrack(0, false);
+      });
+      trackCard1.addEventListener('click', function () {
+        if (checkStageLockGuard('切換音軌')) return;
+        selectTrack(1, false);
+      });
+
+      replaceTrack0Btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (checkStageLockGuard('突發替代 TRACK 01')) return;
+        replaceTrack0Input.click();
+      });
+      replaceTrack1Btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (checkStageLockGuard('突發替代 TRACK 02')) return;
+        replaceTrack1Input.click();
+      });
+
+      resetTrack0Btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (checkStageLockGuard('還原預設 TRACK 01')) return;
+        resetPresetTrackToDefault(0);
+      });
+      resetTrack1Btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (checkStageLockGuard('還原預設 TRACK 02')) return;
+        resetPresetTrackToDefault(1);
+      });
+
+      replaceTrack0Input.addEventListener('change', function (e) {
+        if (e.target.files && e.target.files[0]) {
+          replacePresetTrackWithFile(0, e.target.files[0]);
+        }
+        replaceTrack0Input.value = '';
+      });
+      replaceTrack1Input.addEventListener('change', function (e) {
+        if (e.target.files && e.target.files[0]) {
+          replacePresetTrackWithFile(1, e.target.files[0]);
+        }
+        replaceTrack1Input.value = '';
+      });
+      trackCard2.addEventListener('click', function () {
+        if (checkStageLockGuard('切換至自定義播放清單')) return;
+        selectTrack(2, false);
+        if (customPlaylist.length === 0) {
+          customPlaylistInput.click();
+        }
+      });
+      switchTrackBtn.addEventListener('click', function () {
+        if (checkStageLockGuard('切換播放來源')) return;
+        const nextIdx = (currentTrackIndex + 1) % 3;
+        selectTrack(nextIdx, false);
+        showToast('已切換音軌至：' + AUDIO_TRACKS[nextIdx].fileName, 'info');
+      });
+
+      // Custom Playlist Upload & Controls
+      addCustomPlaylistBtn.addEventListener('click', function () {
+        customPlaylistInput.click();
+      });
+
+      const initialEmptyBtn = document.getElementById('emptyUploadTriggerBtn');
+      if (initialEmptyBtn) {
+        initialEmptyBtn.addEventListener('click', function () {
+          customPlaylistInput.click();
+        });
+      }
+
+      customPlaylistInput.addEventListener('change', function (e) {
+        addFilesToCustomPlaylist(e.target.files);
+        customPlaylistInput.value = '';
+      });
+
+      customAutoNextToggleBtn.addEventListener('click', function () {
+        isCustomPlaylistAutoNext = !isCustomPlaylistAutoNext;
+        if (isCustomPlaylistAutoNext) {
+          customAutoNextToggleBtn.textContent = '⏭ 自動連播: ON';
+          customAutoNextToggleBtn.className = 'px-2 py-1 rounded-lg bg-purple-500/20 border border-purple-400/40 text-[11px] font-bold text-purple-200 transition';
+          showToast('已開啟自定義清單自動連播下一首', 'info');
+        } else {
+          customAutoNextToggleBtn.textContent = '⏭ 自動連播: OFF';
+          customAutoNextToggleBtn.className = 'px-2 py-1 rounded-lg bg-slate-800 border border-white/10 text-[11px] font-semibold text-slate-400 transition';
+          showToast('已關閉自定義清單自動連播', 'info');
+        }
+      });
+
+      clearCustomPlaylistBtn.addEventListener('click', function () {
+        if (checkStageLockGuard('清空自定義播放清單')) return;
+        for (let i = 0; i < customPlaylist.length; i++) {
+          if (customPlaylist[i].url) {
+            try { URL.revokeObjectURL(customPlaylist[i].url); } catch (e) {}
+          }
+        }
+        customPlaylist = [];
+        customPlaylistActiveIndex = 0;
+        if (currentTrackIndex === 2) {
+          audioEl.pause();
+          audioEl.removeAttribute('src');
+          audioEl.load();
+        }
+        renderCustomPlaylistUI();
+        updateTrackSelectionUI();
+        updateTimeDisplay();
+        showToast('已清空自定義播放清單', 'info');
+      });
+
+      // Local MP3 File Loader
+      loadLocalFilesBtn.addEventListener('click', function () {
+        localMp3Input.click();
+      });
+
+      localMp3Input.addEventListener('change', function (e) {
+        const files = e.target.files;
+        if (!files || files.length === 0) return;
+
+        let matchedAny = false;
+        for (let i = 0; i < files.length; i++) {
+          const f = files[i];
+          const url = URL.createObjectURL(f);
+          if (f.name.indexOf('主你知道') >= 0 || f.name.indexOf('主祢知道') >= 0) {
+            AUDIO_TRACKS[0].customUrl = url;
+            trackStatus0.textContent = 'LOCAL FILE OK';
+            trackStatus0.className = 'text-[10px] font-mono text-emerald-400';
+            matchedAny = true;
+          } else if (f.name.indexOf('來自天上的信') >= 0) {
+            AUDIO_TRACKS[1].customUrl = url;
+            trackStatus1.textContent = 'LOCAL FILE OK';
+            trackStatus1.className = 'text-[10px] font-mono text-emerald-400';
+            matchedAny = true;
+          } else if (files.length === 1) {
+            AUDIO_TRACKS[currentTrackIndex].customUrl = url;
+            const st = currentTrackIndex === 0 ? trackStatus0 : trackStatus1;
+            st.textContent = 'LOCAL FILE OK';
+            st.className = 'text-[10px] font-mono text-emerald-400';
+            matchedAny = true;
+          }
+        }
+
+        if (matchedAny) {
+          selectTrack(currentTrackIndex, false);
+          showToast('已成功載入本機 MP3 音訊檔案！', 'success');
+        }
+        localMp3Input.value = '';
+      });
+
+      // Master Volume Slider, Presets, Mute & MC Voice-Over Ducking
+      masterVolumeSlider.addEventListener('input', function () {
+        setMasterVolumePercent(parseFloat(this.value));
+      });
+
+      const volPresetBtns = document.querySelectorAll('.vol-preset-btn');
+      for (let vp = 0; vp < volPresetBtns.length; vp++) {
+        volPresetBtns[vp].addEventListener('click', function () {
+          const targetPct = parseInt(this.getAttribute('data-vol-preset'), 10);
+          setMasterVolumePercent(targetPct);
+          showToast('主音量已設為 ' + targetPct + '%', 'info');
+        });
+      }
+
+      muteToggleBtn.addEventListener('click', toggleMute);
+      duckingToggleBtn.addEventListener('click', toggleVoiceOverDucking);
+
+      // Stage Safety Lock Toggle
+      stageLockBtn.addEventListener('click', function () {
+        isStageLocked = !isStageLocked;
+        if (isStageLocked) {
+          stageLockIcon.textContent = '🔒';
+          stageLockLabel.textContent = '防誤觸: 開';
+          stageLockBtn.className = 'console-btn px-3 py-1.5 rounded-xl bg-amber-400/20 border border-amber-400/60 text-xs font-extrabold text-amber-300 flex items-center gap-1.5';
+          showToast('🔒 已開啟演出防誤觸鎖定（仍可調較音量、MC 壓低與 Fade Out）', 'warn');
+        } else {
+          stageLockIcon.textContent = '🔓';
+          stageLockLabel.textContent = '防誤觸: 關';
+          stageLockBtn.className = 'console-btn px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-white/15 text-xs font-bold text-slate-300 flex items-center gap-1.5';
+          showToast('🔓 已解除演出防誤觸鎖定', 'info');
+        }
+      });
+
+      // Scroll to Current Active Rundown Cue
+      document.getElementById('scrollToLiveCueBtn').addEventListener('click', function () {
+        const activeNode = document.getElementById('activeRundownNode');
+        if (activeNode) {
+          activeNode.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          showToast('已定位至目前時間對應流程', 'info');
+        } else {
+          rundownTimelineContainer.scrollTo({ top: 0, behavior: 'smooth' });
+          showToast('目前不在 15:35–17:10 活動時段內，已回到時間軸頂部', 'info');
+        }
+      });
+
+      fadeInBtn.addEventListener('click', function () {
+        triggerFadeIn();
+      });
+
+      fadeOutBtn.addEventListener('click', function () {
+        triggerFadeOut();
+      });
+
+      // Transport Controls
+      playDirectBtn.addEventListener('click', function () {
+        cancelActiveFade();
+        fadeEnvelope = 1;
+        applyEffectiveVolume();
+        audioEl.play().catch(function () {
+          showToast('無法直接播放，請確認同資料夾已有 ' + AUDIO_TRACKS[currentTrackIndex].fileName + ' 或點「載入本機 MP3」', 'warn');
+        });
+      });
+
+      pauseBtn.addEventListener('click', function () {
+        cancelActiveFade();
+        audioEl.pause();
+        updatePlaybackBadge();
+      });
+
+      stopResetBtn.addEventListener('click', function () {
+        if (checkStageLockGuard('停止歸零')) return;
+        cancelActiveFade();
+        clearFortySecMonitor();
+        audioEl.pause();
+        try {
+          audioEl.currentTime = 0;
+        } catch (e) {}
+        fadeEnvelope = 1;
+        applyEffectiveVolume();
+        updatePlaybackBadge();
+        updateTimeDisplay();
+      });
+
+      loopToggleBtn.addEventListener('click', function () {
+        isLoopEnabled = !isLoopEnabled;
+        audioEl.loop = isLoopEnabled;
+        if (isLoopEnabled) {
+          loopBtnLabel.textContent = '🔁 Loop: ON';
+          loopToggleBtn.className = 'console-btn py-2.5 px-2 rounded-xl bg-amber-400/20 border border-amber-400/60 text-amber-300 font-bold text-xs sm:text-sm flex flex-col items-center justify-center gap-0.5';
+          showToast('已開啟單曲循環 (Loop ON)', 'info');
+        } else {
+          loopBtnLabel.textContent = '🔁 Loop: OFF';
+          loopToggleBtn.className = 'console-btn py-2.5 px-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs sm:text-sm border border-white/10 flex flex-col items-center justify-center gap-0.5';
+          showToast('已關閉單曲循環 (Loop OFF)', 'info');
+        }
+      });
+
+      // Seek Slider & Audio Element Lifecycle Events
+      seekSlider.addEventListener('input', function () {
+        isSeeking = true;
+        const dur = audioEl.duration;
+        if (isFinite(dur) && dur > 0) {
+          const target = (parseFloat(seekSlider.value) / 1000) * dur;
+          elapsedTimeDisplay.textContent = formatTimeTenths(target);
+        }
+      });
+
+      seekSlider.addEventListener('change', function () {
+        const dur = audioEl.duration;
+        if (isFinite(dur) && dur > 0) {
+          try {
+            audioEl.currentTime = (parseFloat(seekSlider.value) / 1000) * dur;
+          } catch (e) {}
+        }
+        isSeeking = false;
+        updateTimeDisplay();
+      });
+
+      audioEl.addEventListener('play', updatePlaybackBadge);
+      audioEl.addEventListener('pause', updatePlaybackBadge);
+      audioEl.addEventListener('ended', function () {
+        clearFortySecMonitor();
+        if (currentTrackIndex === 2 && !isLoopEnabled && isCustomPlaylistAutoNext && customPlaylist.length > 1) {
+          customPlaylistActiveIndex = (customPlaylistActiveIndex + 1) % customPlaylist.length;
+          renderCustomPlaylistUI();
+          selectTrack(2, true);
+          showToast('⏭ 自動連播下一首：' + customPlaylist[customPlaylistActiveIndex].name, 'info');
+          return;
+        }
+        updatePlaybackBadge();
+      });
+
+      macro40sFadeOutBtn.addEventListener('click', function () {
+        runMacro40sFadeOut();
+      });
+
+      macro30sFadeInBtn.addEventListener('click', function () {
+        runMacro30sFadeIn();
+      });
+
+      macro1710LetterBtn.addEventListener('click', function () {
+        runMacro1710LetterSong();
+      });
+
+      // Lyrics Section Navigation, Alignment & Font Size Controls
+      document.getElementById('prevLyricSecBtn').addEventListener('click', function () {
+        if (activeLyricSectionIndex > 0) {
+          focusLyricSection(activeLyricSectionIndex - 1, true);
+        }
+      });
+
+      document.getElementById('nextLyricSecBtn').addEventListener('click', function () {
+        const song = getActiveSong();
+        if (song && activeLyricSectionIndex < song.sections.length - 1) {
+          focusLyricSection(activeLyricSectionIndex + 1, true);
+        }
+      });
+
+      const alignCenterBtn = document.getElementById('alignCenterBtn');
+      const alignLeftBtn = document.getElementById('alignLeftBtn');
+
+      alignCenterBtn.addEventListener('click', function () {
+        lyricsAlignMode = 'center';
+        alignCenterBtn.className = 'px-2.5 py-1 rounded-md text-[11px] font-bold bg-amber-400 text-slate-950 transition';
+        alignLeftBtn.className = 'px-2.5 py-1 rounded-md text-[11px] font-semibold text-slate-400 hover:text-white transition';
+        renderActiveSongLyrics();
+      });
+
+      alignLeftBtn.addEventListener('click', function () {
+        lyricsAlignMode = 'left';
+        alignLeftBtn.className = 'px-2.5 py-1 rounded-md text-[11px] font-bold bg-amber-400 text-slate-950 transition';
+        alignCenterBtn.className = 'px-2.5 py-1 rounded-md text-[11px] font-semibold text-slate-400 hover:text-white transition';
+        renderActiveSongLyrics();
+      });
+
+      document.getElementById('lyricFontDownBtn').addEventListener('click', function () {
+        lyricsFontScale = Math.max(80, lyricsFontScale - 10);
+        document.getElementById('lyricFontScaleLabel').textContent = lyricsFontScale + '%';
+        renderActiveSongLyrics();
+      });
+
+      document.getElementById('lyricFontUpBtn').addEventListener('click', function () {
+        lyricsFontScale = Math.min(150, lyricsFontScale + 10);
+        document.getElementById('lyricFontScaleLabel').textContent = lyricsFontScale + '%';
+        renderActiveSongLyrics();
+      });
+
+      // Font Theme Buttons
+      const fontBtns = document.querySelectorAll('.font-theme-btn');
+      for (let i = 0; i < fontBtns.length; i++) {
+        fontBtns[i].addEventListener('click', function () {
+          applyFontTheme(this.getAttribute('data-font-btn'), true);
+        });
+      }
+
+      // High-Frequency Real-Time Wall Clock, Audio Timecode & VU Meter Loop
+      setInterval(function () {
+        updateWallClockAndSchedule();
+        updateTimeDisplay();
+        updateVuMeterAnimation();
+      }, 100);
+
+      // Boot Sequence
+      let savedFont = 'serif';
+      try {
+        savedFont = localStorage.getItem(FONT_THEME_KEY) || 'serif';
+      } catch (e) {}
+      applyFontTheme(savedFont, false);
+
+      updateWallClockAndSchedule();
+      probeDefaultTracks();
+      renderCustomPlaylistUI();
+      selectTrack(0, false);
+      renderRundownTimeline();
+      renderSongTabs();
+      renderActiveSongLyrics();
+    })();
+  </script>
+</body>
+</html>
