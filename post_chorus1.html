@@ -610,34 +610,69 @@
           subtitle: 'HKACM 香港基督徒音樂事工協會 · 曲/詞：Ode Wong, Glory Cheung',
           themeSummary: '訴說主耶穌深知人內心的軟弱、疲乏與渴慕，在迷途之中親自尋找並賜下勇氣走上新方向。',
           searchQuery: '主祢知道 HKACM 歌詞',
-          structureSummary: 'V1 → C → V2 → C (15:50 流程指定) / 17:00 完整演唱',
-          openingCue: '15:50 純音樂 0:30 起同步顯示 V1 C V2 C · 17:00 現場演唱',
+          structureSummary: '17:00 完整演唱',
+          openingCue: '15:50 純音樂 0:30 起同步顯示',
           sections: [
             {
               label: 'Verse 1 (V1)',
               type: 'verse',
               cueNote: '15:50 純音樂 0:30 起同步顯示',
-              text: `軟弱主祢知道，疲乏主已知道
-更知道我渴慕，我心裡那愛慕
+              text: `軟弱主祢知道 疲乏主已知道
+更知道我渴慕 我心裡那愛慕
 這一切祢都知道`
             },
             {
-              label: 'Chorus (C)',
+              label: 'Chorus 1 (C1)',
               type: 'chorus',
-              cueNote: '副歌',
-              text: ``
+              cueNote: '第一段副歌',
+              text: `耶穌親自尋找我
+於加利利海邊 問我的心如何
+縱使我曾軟弱 你卻沒有捨棄
+願一生跟主 奉上給你`
             },
             {
               label: 'Verse 2 (V2)',
               type: 'verse',
               cueNote: '第二段主歌',
-              text: ``
+              text: `軟弱主會擁抱 疲乏主也鼓舞
+你安慰你引導 你寬恕你教導
+這一切我都知道`
             },
             {
-              label: 'Chorus (C)',
+              label: 'Chorus 2 (C2)',
               type: 'chorus',
+              cueNote: '第二段副歌',
+              text: `耶穌親自尋找我
+於加利利海邊 問我的心如何
+縱使我曾軟弱 祢卻沒有捨棄
+願一生跟主 奉上給祢`
+            },
+            {
+              label: 'Bridge (B)',
+              type: 'verse',
               cueNote: '副歌',
-              text: ``
+              text: `我不回首 向前走
+點起愛祢的火 永不放手
+祢應許不改變 必施恩看顧
+賜我勇氣走上 新的方向`
+            },
+            {
+              label: 'Chorus 3 (C3)',
+              type: 'chorus',
+              cueNote: '第三段副歌',
+              text: `耶穌親自尋找我
+於加利利海邊 問我的心如何
+縱使我曾軟弱 祢卻沒有捨棄
+願一生跟主`
+            },
+            {
+              label: 'Chorus 4 (C4)',
+              type: 'chorus',
+              cueNote: '第四段副歌',
+              text: `耶穌親自尋找我
+漆黑迷途之中 讓我再見真光
+縱使我曾軟弱 你卻沒有捨棄
+願一生跟主奉上給祢`
             }
           ]
         },
@@ -646,30 +681,39 @@
           number: '02',
           timeSlot: '16:00',
           title: '《當你走到無力》',
-          subtitle: 'Red Sea 原創粵語詩歌 · 曲/詞：唐瑛琦（已更正原流程表誤植歌名）',
+          subtitle: 'Red Sea 原創粵語詩歌 · 曲/詞：唐瑛琦',
           themeSummary: '安慰在人生路上感到孤單、空虛與疲乏的人，提醒只要相信並伸手接受，耶穌必擔當軟弱帶領展翅高飛。',
           searchQuery: '當你走到無力 Red Sea 歌詞',
-          structureSummary: 'Verse 1 → Verse 2 → Chorus',
-          openingCue: '16:00 Busking 演出',
+          structureSummary: '/',
+          openingCue: '16:00 Busking ',
           sections: [
             {
               label: 'Verse 1',
               type: 'verse',
-              cueNote: '起唱主歌',
-              text: `當你走到無力繼續下去，當你感到寂寞困惱空虛，
-只要相信神隨時扶助你，願助你解開困惑拋開痛悲。`
+              cueNote: '起唱主歌',.
+              text: `當你走到無力繼續下去 當你感到寂寞困惱空虛，
+只要相信神隨時扶助你 願助你解開困惑拋開痛悲。`
             },
             {
               label: 'Verse 2',
               type: 'verse',
               cueNote: '第二段主歌',
-              text: ``
+              text: `當你跑到疲乏難再下去 當你感到疑惑說：「我是誰？」
+只要相信神完全明白你 就讓你伸手接受
+祂深愛你`
             },
             {
               label: 'Chorus',
               type: 'chorus',
               cueNote: '副歌',
-              text: ``
+              text: `別害怕 祂知你難受 擔當軟弱與困憂
+不需再懼怕 耶穌必拯救
+願你開口接受 張開你手
+別害怕 祂知你難受 擔當軟弱與困憂
+不需再懼怕 耶穌必拯救
+讓你一生快樂展翅高飛 一個全新的你
+
+`
             }
           ]
         },
@@ -688,26 +732,37 @@
               label: 'Verse 1',
               type: 'verse',
               cueNote: '起唱主歌',
-              text: `我的天，為何總下著雨，遙望長空，神啊！你在哪兒？
-如若這匆匆生命真有豐盛意義，何以要面對沉痛失意。`
+              text: `我的天 為何總下著雨 
+              遙望長空 神啊 你在哪兒
+如若這匆匆生命 真有豐盛意義
+何以要面對沉痛失意`
             },
             {
               label: 'Verse 2',
               type: 'verse',
               cueNote: '第二段主歌',
-              text: ``
+              text: `我的心 像迷失在絕處
+              前路無光 神啊 你在哪兒
+難道這一生彷彿 只有不幸際遇
+神啊 你別要無言不語`
             },
             {
               label: 'Chorus 1',
               type: 'chorus',
               cueNote: '副歌第一段',
-              text: ``
+              text: `我沒法控制狂風的方向 也未能知曉
+              那日方可重見艷陽
+但我知主的手 總會守在我旁
+前景雖灰暗信念未搖晃`
             },
             {
               label: 'Chorus 2',
               type: 'chorus',
               cueNote: '副歌第二段',
-              text: ``
+              text: `我沒法掌管潮水的升降 也未能阻擋遍地冰霜
+              隨處跌盪
+但我知 主恩典
+足夠克服駭浪 無力的心可變堅壯`
             }
           ]
         },
@@ -723,20 +778,30 @@
           openingCue: '16:30 Busking 演出',
           sections: [
             {
-              label: 'Verse',
-              type: 'verse',
               cueNote: '起唱主歌',
-              text: `前望需要勇氣，等待時需盼望
-猶幸一生同行，是祢給我力量`
-            },
-            {
-              label: 'Chorus',
-              type: 'chorus',
-              cueNote: '副歌',
-              text: ``
+              text: `前望需要勇氣 等待時需盼望
+猶幸一生同行 是祢給我力量
+前路縱如曠野 主住我心
+縱天塌下來心不慌 聖靈內住我心高歌
+沿途有主劃破深海 止息狂風駭浪
+祢的愛叫我勇敢踏前 靠祢堅壯
+昂然橫越曠野幽谷 不屈源於盼望
+祢的愛是我危難裏 唯一的真光
+沿途有主劃破深海 止息狂風駭浪
+祢的愛叫我勇敢踏前 靠祢堅壯
+昂然橫越曠野幽谷 不屈源於盼望
+祢的愛是我危難裏 唯一的真光
+祢話語如雲柱火柱 導航着若履平原
+世事變但神祢不變 神的帳幕住在人間
+沿途有主劃破深海 止息狂風駭浪
+祢的愛叫我勇敢踏前 靠祢堅壯
+昂然橫越曠野幽谷 不屈源於盼望
+祢的愛是我危難裏 唯一的真光
+祢的愛叫我勇敢踏前 靠祢堅壯`
             }
-          ]
-        },
+            {
+          
+
         {
           id: 'song5',
           number: '05',
